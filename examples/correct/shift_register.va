@@ -1,0 +1,41 @@
+// Correct Example: 4-bit Shift Register
+// Demonstrates proper variable declarations and edge detection
+
+module shift_register (
+    inout electrical VDD,
+    inout electrical VSS,
+    input electrical clk_i,
+    input electrical data_i,
+    output electrical [3:0] q_o
+);
+    // All declarations at module level
+    parameter real vth = 0.5;
+    parameter real tdelay = 1n;
+    integer shift_reg, data_val;
+    real vh_actual, vl_actual;
+    genvar i;
+    
+    analog begin
+        // Read supply voltages
+        vh_actual = V(VDD);
+        vl_actual = V(VSS);
+        
+        // Initialize shift register
+        @(initial_step) begin
+            shift_reg = 0;
+        end
+        
+        // Read input data
+        data_val = (V(data_i) > vth) ? 1 : 0;
+        
+        // Shift on rising clock edge
+        @(cross(V(clk_i) - vth, +1)) begin
+            shift_reg = ((shift_reg << 1) | data_val) & 15;
+        end
+        
+        // Output parallel data
+        for (i = 0; i < 4; i = i + 1) begin
+            V(q_o[i]) <+ transition((shift_reg & (1 << i)) ? vh_actual : vl_actual, 0, tdelay);
+        end
+    end
+endmodule

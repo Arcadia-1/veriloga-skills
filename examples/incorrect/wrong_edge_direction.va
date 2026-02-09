@@ -1,0 +1,61 @@
+// INCORRECT Example: Wrong Cross Edge Direction
+// This demonstrates WRONG usage - incorrect edge detection direction
+
+module edge_wrong_direction (
+    inout electrical VDD,
+    inout electrical VSS,
+    input electrical clk_i,
+    output electrical out_o
+);
+    parameter real vth = 0.5;
+    integer count;
+    real vh_actual, vl_actual;
+    
+    analog begin
+        vh_actual = V(VDD);
+        vl_actual = V(VSS);
+        
+        @(initial_step) count = 0;
+        
+        // ❌ ERROR: Using -1 when intending to detect rising edge
+        // -1 is for falling edge, not rising edge!
+        @(cross(V(clk_i) - vth, -1)) begin
+            count = count + 1;  // This increments on falling edge, not rising!
+        end
+        
+        V(out_o) <+ transition(count ? vh_actual : vl_actual);
+    end
+endmodule
+
+// CORRECT VERSION: Use +1 for rising edge
+/*
+module edge_correct (
+    inout electrical VDD,
+    inout electrical VSS,
+    input electrical clk_i,
+    output electrical out_o
+);
+    parameter real vth = 0.5;
+    integer count;
+    real vh_actual, vl_actual;
+    
+    analog begin
+        vh_actual = V(VDD);
+        vl_actual = V(VSS);
+        
+        @(initial_step) count = 0;
+        
+        // ✓ Correct: +1 for rising edge
+        @(cross(V(clk_i) - vth, +1)) begin
+            count = count + 1;
+        end
+        
+        V(out_o) <+ transition(count ? vh_actual : vl_actual);
+    end
+endmodule
+*/
+
+// EDGE DIRECTION REFERENCE:
+// @(cross(V(signal) - vth, +1))  // Rising edge: 0 -> 1
+// @(cross(V(signal) - vth, -1))  // Falling edge: 1 -> 0
+// @(cross(V(signal) - vth))      // Both edges

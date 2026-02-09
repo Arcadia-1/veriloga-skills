@@ -1,0 +1,50 @@
+// INCORRECT Example: Integer Loop Variable
+// This demonstrates WRONG usage - loop variables must be genvar
+
+module shifter_wrong_loop (
+    inout electrical VDD,
+    inout electrical VSS,
+    input electrical [7:0] data_i,
+    output electrical [7:0] data_o
+);
+    parameter real vth = 0.5;
+    integer i;  // ❌ ERROR: Loop variable should be genvar, not integer
+    integer data_val;
+    real vh_actual, vl_actual;
+    
+    analog begin
+        vh_actual = V(VDD);
+        vl_actual = V(VSS);
+        
+        data_val = 0;
+        
+        // ❌ ERROR: Using integer 'i' in for loop
+        for (i = 0; i < 8; i = i + 1) begin
+            if (V(data_i[i]) > vth)
+                data_val = data_val | (1 << i);
+        end
+        
+        for (i = 0; i < 8; i = i + 1) begin
+            V(data_o[i]) <+ transition((data_val & (1 << i)) ? vh_actual : vl_actual);
+        end
+    end
+endmodule
+
+// CORRECT VERSION: Use genvar for loop variables
+/*
+module shifter_correct (
+    inout electrical VDD,
+    inout electrical VSS,
+    input electrical [7:0] data_i,
+    output electrical [7:0] data_o
+);
+    parameter real vth = 0.5;
+    genvar i;  // ✓ Correct: Loop variable is genvar
+    integer data_val;
+    real vh_actual, vl_actual;
+    
+    analog begin
+        // ... rest of code using genvar i in loops
+    end
+endmodule
+*/

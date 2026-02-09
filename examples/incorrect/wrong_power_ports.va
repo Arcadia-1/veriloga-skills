@@ -1,0 +1,62 @@
+// INCORRECT Example: Missing or Wrong Power Ports
+// This demonstrates WRONG usage - VDD/VSS must be inout, not input
+
+module buffer_wrong_power (
+    input electrical VDD,  // ❌ ERROR: Should be 'inout', not 'input'
+    input electrical VSS,  // ❌ ERROR: Should be 'inout', not 'input'
+    input electrical in_i,
+    output electrical out_o
+);
+    parameter real vth = 0.5;
+    integer in_val;
+    real vh_actual, vl_actual;
+    
+    analog begin
+        vh_actual = V(VDD);
+        vl_actual = V(VSS);
+        
+        in_val = (V(in_i) > vth) ? 1 : 0;
+        
+        V(out_o) <+ transition(in_val ? vh_actual : vl_actual);
+    end
+endmodule
+
+// ANOTHER COMMON ERROR: Missing power ports entirely
+module buffer_missing_power (
+    input electrical in_i,
+    output electrical out_o
+);
+    // ❌ ERROR: No VDD/VSS ports defined!
+    parameter real vth = 0.5;
+    integer in_val;
+    
+    analog begin
+        in_val = (V(in_i) > vth) ? 1 : 0;
+        
+        // ❌ ERROR: Using hardcoded voltages instead of supply voltages
+        V(out_o) <+ transition(in_val ? 1.8 : 0.0);
+    end
+endmodule
+
+// CORRECT VERSION: VDD/VSS as inout
+/*
+module buffer_correct (
+    inout electrical VDD,  // ✓ Correct: inout
+    inout electrical VSS,  // ✓ Correct: inout
+    input electrical in_i,
+    output electrical out_o
+);
+    parameter real vth = 0.5;
+    integer in_val;
+    real vh_actual, vl_actual;
+    
+    analog begin
+        vh_actual = V(VDD);  // ✓ Read actual supply
+        vl_actual = V(VSS);
+        
+        in_val = (V(in_i) > vth) ? 1 : 0;
+        
+        V(out_o) <+ transition(in_val ? vh_actual : vl_actual);
+    end
+endmodule
+*/

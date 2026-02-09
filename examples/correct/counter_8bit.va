@@ -1,0 +1,49 @@
+// Correct Example: 8-bit Counter Module
+// Demonstrates proper Verilog-A coding style following all guidelines
+
+module counter_8bit (
+    inout electrical VDD,
+    inout electrical VSS,
+    input electrical clk_i,
+    input electrical reset_i,
+    output electrical [7:0] count_o
+);
+    // ALL variable declarations at module level (BEFORE analog begin)
+    parameter real vth = 0.5;
+    parameter real tdelay = 1n;
+    integer count, clk_val, reset_val;
+    real vh_actual, vl_actual;
+    genvar i;  // Use genvar for loop variables
+    
+    analog begin
+        // Read supply voltages from power ports
+        vh_actual = V(VDD);
+        vl_actual = V(VSS);
+        
+        // Initialize counter at simulation start
+        @(initial_step) begin
+            count = 0;
+        end
+        
+        // Read inputs using threshold comparison
+        clk_val = (V(clk_i) > vth) ? 1 : 0;
+        reset_val = (V(reset_i) > vth) ? 1 : 0;
+        
+        // Synchronous reset logic
+        if (reset_val) begin
+            count = 0;
+        end
+        
+        // Rising edge detection using cross function
+        @(cross(V(clk_i) - vth, +1)) begin
+            if (!reset_val) begin
+                count = (count + 1) % 256;
+            end
+        end
+        
+        // Output assignment using loop with genvar
+        for (i = 0; i < 8; i = i + 1) begin
+            V(count_o[i]) <+ transition((count & (1 << i)) ? vh_actual : vl_actual, 0, tdelay);
+        end
+    end
+endmodule
