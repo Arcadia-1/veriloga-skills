@@ -7,15 +7,13 @@
 
 // Domain: <voltage|current>  (auto-classified after code is written)
 
-module MODULE_NAME (VDD, VSS, /* add ports here */);
+// Style A: ANSI inline (recommended for Spectre / Virtuoso)
+module MODULE_NAME (inout electrical VDD, inout electrical VSS /* , add ports here */);
 
-    // ── Power ──────────────────────────────────────────────
-    inout electrical VDD, VSS;
-
-    // ── Signal Ports ───────────────────────────────────────
-    // input  electrical clk_i;
-    // input  electrical [7:0] data_i;      // bus example
-    // output electrical out_o;
+// Style B alternative (also Spectre-compatible):
+// module MODULE_NAME (VDD, VSS /* , add ports */);
+// inout VDD, VSS;
+// electrical VDD, VSS;
 
     // ── Parameters ─────────────────────────────────────────
     // parameter real    vth    = 0.5;       // decision threshold [V]
@@ -53,7 +51,7 @@ module MODULE_NAME (VDD, VSS, /* add ports here */);
         // (state machines, arithmetic, comparisons, etc.)
 
         // 6. Drive outputs
-        // V(out_o) <+ transition(state ? vh : vl, trise, tfall);
+        // V(out_o) <+ transition(state ? vh : vl, 0, trise, tfall);
 
     end
 

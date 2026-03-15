@@ -234,6 +234,15 @@
       "prompt": "Write a single Verilog-A module for a complete SAR ADC that includes the SAR logic (using @(cross()) for clock edges, genvar for bit loops, transition() for DAC control outputs) and an embedded CDAC that models charge redistribution using I(top_plate) <+ ddt(C * V(top_plate, bot_plate)).",
       "expected_output": "The module should be REJECTED as mixed-domain. It combines @(cross())/transition()/genvar (voltage-domain) with I() <+/ddt() (current-domain). The correct approach is to split into a voltage-domain SAR logic module and a current-domain CDAC module.",
       "files": []
+    },
+    {
+      "id": 27,
+      "name": "eval-d2b-4bit",
+      "category": "ADC/SAR",
+      "domain": "voltage",
+      "prompt": "Write a 4-bit static analog-to-binary converter module named _va_d2b_4b. Input: analog voltage VIN (range VSS to VDD). Output: 4-bit binary code DOUT[3:0]. No clock — purely combinational, continuous tracking. Use VDD/VSS power ports.",
+      "expected_output": "A .va file with ANSI-inline or old-style port declarations compatible with Spectre, voltage normalization, integer quantization to 16 levels, bit extraction via shift/mask in genvar loop, transition() output with supply voltages. Reference: assets/examples/adc-sar/_va_d2b_4b.va",
+      "files": ["assets/examples/adc-sar/_va_d2b_4b.va"]
     }
   ]
 }

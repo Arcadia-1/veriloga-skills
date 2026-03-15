@@ -1,0 +1,46 @@
+// _va_d2b_4b.va — 4-bit static analog-to-digital converter
+// Input: analog voltage VIN (between VSS and VDD)
+// Output: 4-bit binary code DOUT[3:0]
+// No clock — purely combinational (continuous tracking)
+// Domain: voltage
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module _va_d2b_4b (inout electrical VDD, inout electrical VSS, input electrical VIN, output electrical [3:0] DOUT);
+
+parameter real trise = 10e-12;
+parameter real tfall = 10e-12;
+
+real vh, vl, vref, vin_norm;
+integer code;
+integer dout[3:0];
+genvar i;
+
+analog begin
+
+    vh = V(VDD);
+    vl = V(VSS);
+    vref = vh - vl;
+
+    // Normalize input to 0~1 range
+    vin_norm = (V(VIN) - vl) / vref;
+
+    // Quantize to 4-bit (16 levels)
+    code = vin_norm * 16.0;
+    if (code > 15) code = 15;
+    if (code < 0)  code = 0;
+
+    // Extract bits
+    for (i = 0; i < 4; i = i + 1) begin
+        dout[i] = (code >> i) & 1;
+    end
+
+    // Drive outputs with transition
+    for (i = 0; i < 4; i = i + 1) begin
+        V(DOUT[i]) <+ transition(dout[i] ? vh : vl, 0, trise, tfall);
+    end
+
+end
+
+endmodule

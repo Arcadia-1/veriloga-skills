@@ -45,38 +45,63 @@ cause simulator errors or silently wrong results. Every module you write must pa
 
 ### Rule 1: All signals use `electrical` type
 Every port and internal node must be declared `electrical`. No `wire`, `logic`, or other types.
+
+Spectre accepts two port declaration styles — both are valid:
+
+**Style A: ANSI inline** (direction + type in the module port list)
 ```
-inout electrical VDD, VSS;
-input electrical clk_i, data_i;
-output electrical out_o;
+module example (inout electrical VDD, inout electrical VSS, input electrical clk_i, output electrical [3:0] dout_o);
+```
+
+**Style B: Old-style separated** (direction and type as separate statements in body)
+```
+module example (VDD, VSS, clk_i, dout_o);
+inout VDD, VSS;
+input clk_i;
+output [3:0] dout_o;
+electrical VDD, VSS, clk_i;
+electrical [3:0] dout_o;
+```
+
+**NOT accepted by Spectre** — combined `inout electrical` in body:
+```
+module example (VDD, VSS, clk_i, dout_o);
+    inout electrical VDD, VSS;       // WRONG — Spectre syntax error
+    input electrical clk_i;          // WRONG
 ```
 
 ### Rule 2: Power ports are `inout`, not `input`
 VDD and VSS must be `inout` because the simulator needs to solve current through them.
 Declaring them as `input` silently breaks power-aware simulation.
 ```
-inout electrical VDD, VSS;    // Correct
-input electrical VDD, VSS;    // WRONG — simulator can't solve supply current
+inout VDD, VSS;    // Correct (old-style)
+input VDD, VSS;    // WRONG — simulator can't solve supply current
 ```
 
-### Rule 3: Read supply voltages from ports
-Never hardcode voltage values like `1.8` or `0.9`. Always read actual supply:
+### Rule 3: Supply voltages — read from ports or parameterize
+Never hardcode voltage literals like `1.8` directly in the logic. Two approaches:
+
+**Option A: Read from power ports** (when VDD/VSS are module ports)
 ```
 vh = V(VDD);
 vl = V(VSS);
+vth = (vh + vl) / 2.0;
 ```
-Then use `vh` and `vl` everywhere — in threshold calculations, output transitions, etc. This
-makes your module work at any supply voltage without editing.
+
+**Option B: Use parameters** (when no power ports, e.g., ideal models)
+```
+parameter real vdd = 1.0;
+parameter real vth = vdd / 2.0;
+```
+
+Both are acceptable — choose based on user's needs. Default threshold is `vth = (vdd + vss) / 2`.
 
 ### Rule 4: All variable declarations at module level
 Every `parameter`, `real`, `integer`, and `genvar` declaration must appear between the port
 declarations and `analog begin`. Declaring variables inside `analog begin` is a syntax error
 in standard Verilog-A (some simulators accept it, most don't).
 ```
-module example(VDD, VSS, in_i, out_o);
-    inout electrical VDD, VSS;
-    input electrical in_i;
-    output electrical out_o;
+module example (inout electrical VDD, inout electrical VSS, input electrical in_i, output electrical out_o);
 
     parameter real vth = 0.5;       // Here — at module level
     real vh, vl, in_val;            // Here — at module level
