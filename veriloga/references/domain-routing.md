@@ -11,7 +11,7 @@ How to route a Verilog-A module to the correct simulator based on its domain cla
 
 ## Voltage-Domain Simulator (EVAS)
 
-**Repository:** https://github.com/Arcadia-1/EVAS
+**Repository:** https://evas.tokenzhang.com/
 **Status:** In development — capabilities may change between syncs.
 
 The EVAS simulator's supported and unsupported constructs are declared in

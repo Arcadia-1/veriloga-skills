@@ -4,7 +4,9 @@
 
 **无外部依赖。** 纯文档/参考型技能，任何 Agent 直接使用。
 
-## openvaf 技能
+电压域模块的仿真需要 [EVAS](https://evas.tokenzhang.com/) 事件驱动仿真器（开发中）。
+
+## openvaf 技能（电流域仿真）
 
 编译和仿真 Verilog-A 模块需要以下工具：
 

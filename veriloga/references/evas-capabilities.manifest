@@ -44,7 +44,7 @@ $vt
 KCL-based solving
 
 # --- Status ---
-# evas_repo: https://github.com/Arcadia-1/EVAS
+# evas_repo: https://evas.tokenzhang.com/
 # evas_status: in-development (CLI not yet stable)
 # last_synced: 2026-03-15
 # last_synced_commit: (fill in EVAS commit hash after sync)

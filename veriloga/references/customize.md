@@ -128,7 +128,7 @@ Force all modules to a specific domain (bypasses code-level analysis):
 ### Custom Voltage-Domain Simulator
 
 Path and invocation for the EVAS voltage-domain simulator
-(https://github.com/Arcadia-1/EVAS — still in development):
+(https://evas.tokenzhang.com/ — still in development):
 
 ```
 # voltage_simulator_path: /path/to/evas

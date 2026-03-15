@@ -2,6 +2,11 @@
 
 两个让 Agent 具有编写和仿真 Verilog-A 行为模型能力的技能包：**veriloga**（写代码）/ **openvaf**（编译仿真）。
 
+写出的模块会根据代码构造自动分为**电压域**和**电流域**，分别路由到不同的仿真器：
+
+- **电压域**（`V() <+` + `@(cross())` + `transition()`）→ [EVAS](https://evas.tokenzhang.com/) 事件驱动仿真器
+- **电流域**（`I() <+` / `ddt()` / `laplace_nd()`）→ OpenVAF + ngspice SPICE 仿真
+
 > **如果你是人类**：下面的技能总览和示例结构可以帮你了解这个包的内容。安装后让 Agent 帮你写 Verilog-A 即可。
 
 > **如果你是 AI Agent**：跳过总览，直接看 [安装](#安装) 说明。`veriloga/SKILL.md` 是写代码的完整指令（8 条必需规则 + 12 类电路参考），`openvaf/SKILL.md` 是编译仿真的指令。代码模板在 `assets/template.va`，31 个参考样例在 `assets/examples/`。
@@ -13,9 +18,9 @@
 | 技能 | 定位 | 功能 |
 |------|------|------|
 | **veriloga** | 写代码 | 8 条必需规则 + 12 类电路参考 + 31 个真实样例，从零写出 simulator-ready 的 Verilog-A |
-| **openvaf** | 编译仿真 | OpenVAF 编译 → ngspice/OSDI 加载 → 仿真验证，完整的 compile-load-simulate 流程 |
+| **openvaf** | 电流域仿真 | OpenVAF 编译 → ngspice/OSDI 加载 → 仿真验证（处理 `I() <+`、`ddt()`、`laplace` 等构造） |
 
-两个技能相互独立但互补——`veriloga` 负责写，`openvaf` 负责跑。
+`veriloga` 负责写代码并自动分类域，电流域模块交给 `openvaf` 跑，电压域模块交给 EVAS 跑。
 
 ---
 
@@ -79,13 +84,15 @@ veriloga/assets/examples/
 
 ## 技能2：openvaf
 
-`veriloga` 的互补技能——写完代码后，用 OpenVAF 编译并在 ngspice 中仿真验证。
+`veriloga` 的互补技能——处理**电流域**模块的编译和仿真。
 
 ### 工作流程
 
 ```
 .va 文件 → OpenVAF 编译 → .osdi 文件 → ngspice 加载 → 仿真验证
 ```
+
+适用于包含 `I() <+`、`ddt()`、`idt()`、`laplace_nd()` 等电流域构造的模块。
 
 ### 覆盖内容
 
@@ -96,6 +103,27 @@ veriloga/assets/examples/
 - 完整的 troubleshooting 指南
 
 详见 [`openvaf/SKILL.md`](./openvaf/SKILL.md)。
+
+---
+
+## 仿真路由
+
+`veriloga` 写完代码后会自动扫描 `analog begin` 块，根据使用的构造分类域并路由到正确的仿真器：
+
+```
+写完模块 → 扫描代码构造 → 分类域
+                           ├── 电压域 → EVAS 事件驱动仿真器
+                           ├── 电流域 → openvaf 技能 (OpenVAF + ngspice)
+                           └── 混合域 → 拒绝，建议拆分模块
+```
+
+| 域 | 判定依据 | 仿真器 | 典型模块 |
+|---|---|---|---|
+| **电压域** | `V() <+` + `@(cross())` / `transition()`，无 `I() <+` | [EVAS](https://evas.tokenzhang.com/) | SAR 逻辑、DFF、计数器、比较器 |
+| **电流域** | `I() <+` / `ddt()` / `idt()` / `laplace_nd()` | OpenVAF + ngspice | Opamp、RLC、VCO 核心、LDO |
+| **混合域** | 同时包含电压域和电流域构造 | 不可直接仿真 | 需拆分为两个子模块 |
+
+域分类和路由的完整逻辑见 `veriloga/references/domain-routing.md`，EVAS 支持的构造清单见 `veriloga/references/evas-capabilities.manifest`。
 
 ---
 
