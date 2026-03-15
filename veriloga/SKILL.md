@@ -1,70 +1,46 @@
 ---
 name: veriloga
 description: >
-  Write production-quality Verilog-A behavioral modules for analog and mixed-signal IC design.
-  Covers all major circuit categories: ADC/SAR, DAC, comparators, PLL/clock, amplifiers,
-  filters, digital logic, counters, registers, state machines, sample-and-hold, signal sources,
-  passive device models, testbenches, switches, and calibration/trim blocks.
-  Use this skill whenever the user asks to write, generate, review, fix, or refactor Verilog-A
-  code (.va files), or asks about Verilog-A syntax, patterns, or best practices — even if they
-  just say "behavioral model", "veriloga block", "analog HDL", or describe a circuit function
-  without mentioning Verilog-A by name. Also trigger when the user pastes Verilog-A code and
-  asks for help, or wants to convert a circuit spec into a behavioral model. Also trigger when
-  the user asks to "simulate this module", "which simulator", "voltage-domain", or "current-domain".
+  Write Verilog-A behavioral modules for analog/mixed-signal IC design (Cadence Virtuoso / Spectre).
+  Covers 12 circuit categories. Trigger on: write/generate/review/fix Verilog-A, .va files,
+  "behavioral model", "veriloga", "analog HDL", circuit spec → behavioral model, or
+  "simulate this module", "voltage-domain", "current-domain".
 ---
 
 # Verilog-A Writer
 
-Write correct, simulator-ready Verilog-A behavioral modules. This skill encodes rules extracted
-from 1,638 real-world .va files across 10+ circuit domains, plus battle-tested coding guidelines.
+Write correct, Virtuoso-ready Verilog-A behavioral modules. Rules extracted from 1,638
+real-world .va files plus a 171-module reference library (14,311 LOC).
 
 ## How to Use This Skill
 
-1. **Identify the circuit category** from the user's request (see Category Index below)
-2. **Read the relevant category reference** in `references/categories/` for port conventions,
-   parameter patterns, and analog block structures specific to that circuit type
-3. **Apply all mandatory rules** (below) — these are non-negotiable
-4. **Use the module template** in `assets/template.va` as your starting skeleton
-5. **Customize** — check `references/customize.md` if the user has project-specific overrides
-6. **Classify the module's domain** — after writing code, scan the `analog begin` block to
-   determine voltage-domain vs. current-domain (see Domain Classification below)
-7. **Route to the correct simulator** — based on the domain classification, route the module
-   to the appropriate simulation path (see Simulation Routing below)
-8. **Verify (optional)** — when the user asks to confirm the module works, run a smoke test
-   on the appropriate simulator (see Smoke Test below)
-9. **Explain usage** — after generating the module, tell the user how to use it: list every
-   port with its direction, what signal to connect, and any key parameters. Example:
-   > - `VDD` (inout): connect to supply, e.g. 0.9V
-   > - `AIN` (input): analog input signal, range 0 ~ VDD
-   > - `CLKS` (input): sampling clock, rising edge triggers conversion
-   > - `DOUT[19:0]` (output): 20-bit binary code, MSB = DOUT[19]
-   > - `parameter vdd = 1`: set to match your supply voltage
-10. **Learn user conventions** — if the user comments on code style (e.g., module name casing,
-   port name prefix/suffix, uppercase vs lowercase, bus ordering), ask whether to save the
-   preference to `references/customize.md` so all future modules follow the same convention.
-   Always check `references/customize.md` at the start of every session for existing preferences.
-
-If the user's request spans multiple categories (e.g., "write me a SAR ADC"), compose modules
-from the relevant categories — one module per function block.
+1. **Identify the circuit category** → see Category Index
+2. **Read the category reference** in `references/categories/`
+3. **Apply all mandatory rules** below
+4. **Start from template** `assets/template.va`
+5. **Check customization** `references/customize.md` for project overrides
+6. **Classify domain** → scan code for voltage vs current constructs (see Domain Classification)
+7. **Route to simulator** (optional) → EVAS for voltage-domain, openvaf for current-domain
+8. **Verify** (optional) → smoke test on the appropriate simulator (see Smoke Test)
+9. **Explain usage** → list every port (direction, what to connect) and key parameters
+10. **Learn conventions** → if user comments on style, ask to save to `references/customize.md`
 
 ---
 
 ## Mandatory Rules
 
-These 8 rules come from analyzing thousands of real designs. Violating any one of them will
-cause simulator errors or silently wrong results. Every module you write must pass all 8.
+Violating any rule causes simulator errors or silently wrong results.
 
 ### Rule 1: All signals use `electrical` type
-Every port and internal node must be declared `electrical`. No `wire`, `logic`, or other types.
 
-Spectre accepts two port declaration styles — both are valid:
+No `wire`, `logic`, or `reg`. Spectre accepts two port styles:
 
-**Style A: ANSI inline** (direction + type in the module port list)
+**Style A: ANSI inline**
 ```
 module example (inout electrical VDD, inout electrical VSS, input electrical clk_i, output electrical [3:0] dout_o);
 ```
 
-**Style B: Old-style separated** (direction and type as separate statements in body)
+**Style B: Old-style separated**
 ```
 module example (VDD, VSS, clk_i, dout_o);
 inout VDD, VSS;
@@ -74,667 +50,327 @@ electrical VDD, VSS, clk_i;
 electrical [3:0] dout_o;
 ```
 
-**NOT accepted by Spectre** — combined `inout electrical` in body:
+**NOT accepted** — combined `inout electrical` in body:
 ```
 module example (VDD, VSS, clk_i, dout_o);
     inout electrical VDD, VSS;       // WRONG — Spectre syntax error
-    input electrical clk_i;          // WRONG
 ```
 
 ### Rule 2: Power ports are `inout`, not `input`
-VDD and VSS must be `inout` because the simulator needs to solve current through them.
-Declaring them as `input` silently breaks power-aware simulation.
-```
-inout VDD, VSS;    // Correct (old-style)
-input VDD, VSS;    // WRONG — simulator can't solve supply current
-```
+
+`input VDD` silently breaks power-aware simulation.
 
 ### Rule 3: Supply voltages — read from ports or parameterize
-Never hardcode voltage literals like `1.8` directly in the logic. Two approaches:
 
-**Option A: Read from power ports** (when VDD/VSS are module ports)
+Never hardcode `1.8` directly. Two approaches:
 ```
-vh = V(VDD);
-vl = V(VSS);
+// Option A: from ports          // Option B: parameterized
+vh = V(VDD);                     parameter real vdd = 1.0;
+vl = V(VSS);                     parameter real vth = vdd / 2.0;
 vth = (vh + vl) / 2.0;
 ```
 
-**Option B: Use parameters** (when no power ports, e.g., ideal models)
-```
-parameter real vdd = 1.0;
-parameter real vth = vdd / 2.0;
-```
+Default threshold: `vth = (vdd + vss) / 2`.
 
-Both are acceptable — choose based on user's needs. Default threshold is `vth = (vdd + vss) / 2`.
+### Rule 4: All declarations at module level
 
-### Rule 4: All variable declarations at module level
-Every `parameter`, `real`, `integer`, and `genvar` declaration must appear between the port
-declarations and `analog begin`. Declaring variables inside `analog begin` is a syntax error
-in standard Verilog-A (some simulators accept it, most don't).
-```
-module example (inout electrical VDD, inout electrical VSS, input electrical in_i, output electrical out_o);
-
-    parameter real vth = 0.5;       // Here — at module level
-    real vh, vl, in_val;            // Here — at module level
-    integer state;                  // Here — at module level
-
-    analog begin
-        // NO declarations here
-        vh = V(VDD);
-        ...
-    end
-endmodule
-```
+`parameter`, `real`, `integer`, `genvar` must appear before `analog begin`.
 
 ### Rule 5: Loop variables use `genvar`
-For `for` loops inside `analog begin`, the loop index must be `genvar`, not `integer`.
-```
-genvar i;                           // Correct
-// integer i;                       // WRONG — causes elaboration error
 
-analog begin
-    for (i = 0; i < 8; i = i + 1) begin
-        ...
-    end
-end
-```
+`integer` loop index causes elaboration errors in most simulators.
 
 ### Rule 6: Initialize state in `@(initial_step)`
-All state variables (counters, registers, flags) must be set to known values inside
-`@(initial_step)`. Uninitialized variables default to 0 in some simulators but garbage in
-others — always be explicit.
-```
-@(initial_step) begin
-    count = 0;
-    state = 0;
-    prev_val = 0.0;
-end
-```
+
+Uninitialized variables default to 0 or garbage depending on simulator.
 
 ### Rule 7: Edge detection uses `@(cross())` with direction
-Rising edge: `+1`. Falling edge: `-1`. Always specify the direction explicitly.
-The threshold should be derived from the supply, not hardcoded.
-```
-vth = (vh + vl) / 2.0;
-@(cross(V(clk_i) - vth, +1))       // Rising edge
-    count = count + 1;
-@(cross(V(clk_i) - vth, -1))       // Falling edge
-    state = 0;
-```
 
-### Rule 8: Outputs use `transition()` with supply voltages
-Every digital output must go through `transition()` to avoid discontinuities that crash the
-simulator. Use the actual supply voltages, not literals.
+`+1` rising, `-1` falling. Omit direction only when both edges are needed.
 
-Use `` `default_transition `` at the top of the file to set a global rise/fall time, instead
-of declaring separate `trise` / `tfall` parameters:
+### Rule 8: Outputs use `transition()` — use `` `default_transition ``
+
 ```
 `default_transition 10p
-
-// Then transition() calls don't need explicit rise/fall:
 V(out_o) <+ transition(state ? vh : vl, 0);
 ```
-Never put macros (`` `define`` values) as the delay/rise/fall arguments of `transition()` —
-some simulators can't resolve them there.
+
+**Pitfall:** Multiple `<+` to the same node *adds* contributions, not overwrites.
+Use a temporary variable and assign once.
 
 ---
 
 ## Category Index
 
-Read the matching reference file before writing a module in that category.
-
-| Category | Reference File | When to Use | Domain |
-|---|---|---|---|
-| ADC / SAR | `references/categories/adc-sar.md` | SAR logic, bit-cycling, pipeline stages, flash sub-ADC, CDAC | voltage |
-| DAC | `references/categories/dac.md` | Current-steering, R-string, binary-weighted, thermometer DAC | either |
-| Comparator | `references/categories/comparator.md` | StrongARM, dynamic, latching, clocked comparators | voltage |
-| PLL / Clock | `references/categories/pll-clock.md` | VCO, DCO, PFD, charge pump, dividers, TDC, DTC | either |
-| Sample & Hold | `references/categories/sample-hold.md` | Track-and-hold, bootstrap switch, sampler | voltage |
-| Amplifier & Filter | `references/categories/amplifier-filter.md` | Opamp, OTA, LPF, BPF, HPF, integrators | current |
-| Digital Logic | `references/categories/digital-logic.md` | Gates, flip-flops, MUX, decoder, counter, register, FSM | voltage |
-| Signal Source | `references/categories/signal-source.md` | AM/FM/QAM modulators, pulse gen, ramp, sinusoidal | voltage |
-| Passive & Model | `references/categories/passive-model.md` | Behavioral R/C/L, MOSFET, BJT, diode models | current |
-| Testbench & Probe | `references/categories/testbench-probe.md` | TB wrappers, probes, meters, stimulus drivers | voltage |
-| Power & Switch | `references/categories/power-switch.md` | Bootstrap, ESD clamp, switched-cap, conductance switch | either |
-| Calibration | `references/categories/calibration.md` | Trim DAC, foreground/background cal, code generators | voltage |
+| Category | Reference File | Domain |
+|---|---|---|
+| ADC / SAR | `references/categories/adc-sar.md` | voltage |
+| DAC | `references/categories/dac.md` | either |
+| Comparator | `references/categories/comparator.md` | voltage |
+| PLL / Clock | `references/categories/pll-clock.md` | either |
+| Sample & Hold | `references/categories/sample-hold.md` | voltage |
+| Amplifier & Filter | `references/categories/amplifier-filter.md` | current |
+| Digital Logic | `references/categories/digital-logic.md` | voltage |
+| Signal Source | `references/categories/signal-source.md` | voltage |
+| Passive & Model | `references/categories/passive-model.md` | current |
+| Testbench & Probe | `references/categories/testbench-probe.md` | voltage |
+| Power & Switch | `references/categories/power-switch.md` | either |
+| Calibration | `references/categories/calibration.md` | voltage |
 
 ---
 
 ## Module Template
 
-Start every new module from `assets/template.va`. It has the correct structure with
-placeholder comments showing where each section goes.
-
----
-
-## Common Pitfalls
-
-Mistakes that compile but produce wrong simulation results — the worst kind of bugs:
-
-1. **Forgetting `@(initial_step)`** — state variables start at 0 or garbage depending on
-   simulator. Your counter works in Spectre but fails in ADS.
-
-2. **Wrong `cross()` direction** — `+1` means rising, `-1` means falling. Mixing them up
-   makes your flip-flop trigger on the wrong edge. Double-check against the spec.
-
-3. **Hardcoded voltages in `transition()`** — writing `transition(1.8, ...)` instead of
-   `transition(vh, ...)` means your block breaks at 0.9V supply. Always use variables.
-
-4. **Multiple `<+` to same node** — Verilog-A *adds* contributions. If you accidentally write
-   `V(out) <+` twice to the same output, you get the sum, not an overwrite. Use a temporary
-   variable and assign once.
-
-5. **`integer` loop variable** — works in some simulators, fails in others. Always `genvar`.
-
-6. **Variables inside `analog begin`** — accepted by Cadence Spectre in some modes, rejected
-   by everything else. Always declare at module level.
-
-7. **Missing power ports** — if your module references VDD/VSS but doesn't declare them as
-   `inout`, the simulator either errors or silently uses 0V.
+Start from `assets/template.va`. Reference examples in `assets/examples/`.
 
 ---
 
 ## Useful Syntax
 
-### Differential voltage: `V(A, B)`
-
-Use `V(A, B)` to read the voltage difference between two nodes. This is cleaner than
-writing `V(A) - V(B)` and is standard Verilog-A syntax:
+### `V(A, B)` — differential voltage
 ```
-// Read differential input
-real vdiff;
-vdiff = V(VINP, VINN);           // equivalent to V(VINP) - V(VINN)
-
-// Comparator decision on differential pair
-Dp = V(VINP, VINN) > VOS;        // compare against offset voltage
-
-// Drive differential output referenced to supply
-V(DCMPP) <+ transition(Dp ? V(VDD) : V(GND), td, tr);
-V(DCMPN) <+ transition(Dp ? V(GND) : V(VDD), td, tr);
+Dp = V(VINP, VINN) > VOS;        // compare differential pair against offset
 ```
 
-Common use cases: comparators, opamps, differential amplifiers, DAC differential outputs.
-
-### String parameters for configuration
-
-Use `string` parameters to pass configuration bit patterns (e.g., trim codes, enable masks)
-as a string literal. Parse with `.len()` and `.substr()`:
+### String parameters — `.len()` / `.substr()`
 ```
-parameter conf = "10110";           // configuration string
-parameter n_conf = 5;
-
+parameter conf = "10110";
 integer conf_list[4:0];
-genvar i;
-
 @(initial_step) begin
-    for (i = 0; i < n_conf; i = i + 1)
+    for (i = 0; i < conf.len(); i = i + 1)
         conf_list[i] = (conf.substr(i, i) == "1");
 end
 ```
 
-Common use cases: SPI trim registers, programmable enable masks, ROM initialization.
-
-### `@(above())` threshold event
-
-`@(above(expr))` triggers when `expr` crosses zero from below (rising threshold).
-Unlike `@(cross())`, it also fires if the condition is already true at `initial_step`:
+### `@(above())` — level-sensitive threshold
 ```
-@(above(V(RST) - vth)) begin
-    // Fires when RST goes above vth, and also at t=0 if RST > vth
+@(above(V(RST) - vth)) begin     // fires at t=0 if already true
     state = 0;
 end
 ```
 
-Use `@(above())` when you need level-sensitive behavior at startup. Use `@(cross())` when
-you only care about transitions during simulation.
-
 ### Internal voltage nodes
-
-Declare internal nodes with `voltage` (or `electrical`) to create intermediate signals
-that are not module ports. Useful for multi-stage logic with `transition()` shaping:
 ```
-voltage [15:0] shadow;              // internal node bus, not a port
-
-// Stage 1: slow transition for timing control
+voltage [15:0] shadow;
 V(shadow[i]) <+ transition(active ? 1 : 0, 0, 100p, 1p);
-
-// Stage 2: re-threshold and drive output with fast edges
-V(OUT[i]) <+ transition((V(shadow[i]) > 0.5) ? vh : vl, 0, tr, tr);
+V(OUT[i]) <+ transition((V(shadow[i]) > 0.5) ? vh : vl, 0);
 ```
-
-Common use cases: frame generators, non-overlapping clock generators, glitch-free muxing.
 
 ### `transition()` as intermediate variable
-
-`transition()` can be assigned to a `real` variable for use in downstream logic,
-not just in `V() <+` contributions:
 ```
 real clk_delayed;
-
-// Create a smoothed/delayed version of a combinational signal
-clk_delayed = transition(((V(RST) < vth) && (V(CLK) > vth)) ? 1 : 0, 200p, 1p, 1p);
-
-// Use it in downstream logic
-V(CLKOUT) <+ transition((clk_delayed > 0.5) ? vh : vl, 0, tr, tr);
+clk_delayed = transition(cond ? 1 : 0, 200p, 1p, 1p);
+V(CLKOUT) <+ transition((clk_delayed > 0.5) ? vh : vl, 0);
 ```
-
-Common use cases: non-overlapping clock generation, pulse-width extension, gated clocks.
 
 ### `analog` single-line (no `begin/end`)
-
-When a module has only one contribution statement, `analog begin ... end` can be replaced
-with a single `analog` statement:
 ```
-module adder (input electrical sigin1, input electrical sigin2, output electrical sigout);
-parameter real k1 = 1;
-parameter real k2 = 1;
-
-    analog
-        V(sigout) <+ k1 * V(sigin1) + k2 * V(sigin2);
-
-endmodule
+analog
+    V(sigout) <+ k1 * V(sigin1) + k2 * V(sigin2);
 ```
 
-Common use cases: ideal adders, buffers, gain stages, voltage sources — any pure combinational
-analog block with a single output expression.
-
-### `generate` compile-time loop
-
-`generate` unrolls at compile time, unlike `for` which runs at simulation time.
-Use `generate` when each iteration must create a distinct instance (e.g., per-bit
-mismatch with different random seeds):
+### `generate` — compile-time loop
 ```
 generate j (0, 7) begin
-    iseed = j;
-    comp_var[j] = 1.0 + mismatch * abs($random(iseed));
+    comp_var[j] = 1.0 + mismatch * abs($random(j) / `MAXINT);
 end
 ```
 
-Note: `generate` uses its own loop variable (not `genvar`), declared implicitly.
-
-### `$random()` for mismatch modeling
-
-`$random(seed)` returns a random integer. Use with a per-instance seed for
-Monte Carlo mismatch:
+### `$random()` — mismatch modeling
 ```
-`define MAXINT 2_147_483_647.0
-
-real r1;
 r1 = abs($random(seed) / `MAXINT);   // uniform [0, 1]
 cap = cap_nominal * (1.0 + r1 * mismatch);
 ```
 
-Common use cases: capacitor mismatch, comparator offset, DAC weight errors.
-
-### Parameterized macros (`` `define `` with arguments)
-
-`` `define `` macros can take arguments for reusable expressions:
+### Parameterized `` `define ``
 ```
 `define FRAC_MM(I) (1.0 + mismatch * abs($random(I) / `MAXINT))
-
 comp_var[0] = `FRAC_MM(seed0);
-comp_var[1] = `FRAC_MM(seed1);
+`undef FRAC_MM
 ```
 
-Use `` `undef MACRO_NAME `` at the end of the module to avoid leaking macros to other files.
-
-### `@(final_step)` — end-of-simulation cleanup
-
-Paired with `@(initial_step)`. Fires once at the end of simulation for reporting,
-file closing, and summary output:
+### `@(final_step)` — end-of-simulation
 ```
 @(final_step) begin
-    $strobe("total samples = %d, average = %f", cnt, sum / cnt);
-    $fclose(file_handle);
+    $strobe("samples = %d, avg = %f", cnt, sum / cnt);
+    $fclose(fh);
 end
 ```
 
-### `@(initial_step("analysis"))` — analysis-filtered initialization
-
-Restrict `@(initial_step)` to fire only during specific analyses:
+### `@(initial_step("analysis"))` — filtered init
 ```
 @(initial_step("ac", "dc")) begin
-    r = 1K;
     c = 1 / (2 * `PI * r * bandwidth);
 end
 ```
 
-Valid analysis names: `"tran"`, `"ac"`, `"dc"`, `"noise"`, `"xf"`.
-
-### `$abstime` — absolute simulation time
-
-Returns the current simulation time as a `real`. Essential for time-dependent behavior:
+### `$abstime` — simulation time
 ```
 phase = 2 * `PI * freq * $abstime;
-V(out) <+ amp * sin(phase);
 ```
 
 ### `$bound_step()` — timestep control
-
-Limits the maximum simulator timestep. Critical for signal sources to prevent
-the simulator from skipping cycles:
 ```
-inst_freq = center_freq + vco_gain * V(vin);
-$bound_step(1.0 / (32 * inst_freq));   // at least 32 points per cycle
+$bound_step(1.0 / (32 * inst_freq));
 ```
 
-### `$display` / `$strobe` / `$finish` — debug and simulation control
-
+### `$display` / `$strobe` / `$finish`
 ```
-$display("value = %f at t = %e", val, $abstime);   // print immediately
-$strobe("value = %f", val);                          // print at end of timestep
-$finish;                                              // terminate simulation
+$display("val = %f at t = %e", val, $abstime);   // immediate
+$strobe("val = %f", val);                          // end of timestep
+$finish;                                            // terminate
 ```
-
-`$display` evaluates immediately; `$strobe` evaluates at the end of the current
-timestep (values are final). Use `$finish` for fatal error conditions.
 
 ### File I/O: `$fopen` / `$fstrobe` / `$fclose`
-
-Log measurement data to files:
 ```
-integer fh;
-
-@(initial_step)
-    fh = $fopen("output.dat", "w");
-
-@(timer(next_sample)) begin
-    $fstrobe(fh, "%e\t%e", $abstime, V(sig));
-end
-
-@(final_step)
-    $fclose(fh);
+@(initial_step) fh = $fopen("output.dat", "w");
+@(timer(next)) $fstrobe(fh, "%e\t%e", $abstime, V(sig));
+@(final_step) $fclose(fh);
 ```
 
-### `$vt` / `$temperature` — thermal constants
-
+### `$vt` / `$temperature`
 ```
-I(anode, cathode) <+ is * (limexp(V(anode, cathode) / $vt) - 1);
-// $vt = kT/q ≈ 25.86 mV at 300K
-// $temperature = simulation temperature in Kelvin
+I(a, c) <+ is * (limexp(V(a, c) / $vt) - 1);   // $vt ≈ 25.86 mV @ 300K
 ```
 
 ### `@(timer())` — periodic event
-
-Fires at a specified simulation time. Use for periodic sampling, code generation:
 ```
-real next_sample;
-
-@(initial_step)
-    next_sample = 0;
-
 @(timer(next_sample)) begin
-    sampled_val = V(sig);
+    val = V(sig);
     next_sample = next_sample + t_sample;
 end
 ```
 
-### `idtmod()` — modular integration
-
-Like `idt()` but wraps the accumulator to prevent overflow. Essential for VCOs:
+### `idtmod()` — modular integration (VCO)
 ```
-phase = idtmod(freq, 0, 1);          // integrates freq, wraps at 1
+phase = idtmod(freq, 0, 1);
 V(out) <+ amp * sin(2 * `PI * phase);
 ```
 
 ### `slew()` — rate limiter
-
-Limits how fast a signal can change:
 ```
 V(out) <+ slew(V(in), max_slope, -max_slope);
-// or single-argument (symmetric):
-V(out) <+ slew(V(in));
 ```
 
 ### `limexp()` — convergence-safe exponential
-
-Use instead of `exp()` in device models to avoid convergence failures:
 ```
-I(anode, cathode) <+ is * (limexp(V(anode, cathode) / $vt) - 1);
+I(a, c) <+ is * (limexp(V(a, c) / $vt) - 1);
 ```
 
-### `last_crossing()` — time of last threshold crossing
-
-Returns the interpolated time when a signal last crossed zero:
+### `last_crossing()` — time of last crossing
 ```
-real t_cross;
-t_cross = last_crossing(V(sig) - vth, +1);   // last rising crossing time
-period = $abstime - t_cross;
+t_cross = last_crossing(V(sig) - vth, +1);
 ```
 
-### `case/endcase` — multi-way branch
-
-Alternative to long `if/else` chains:
+### `case/endcase`
 ```
 case (state)
-    0: begin out = vl; state = 1; end
-    1: begin out = vh; state = 2; end
-    2: begin out = vl; state = 0; end
+    0: out = vl;
+    1: out = vh;
 endcase
 ```
 
 ### `branch` — named branch
-
-Declare a named branch between two nodes for readability:
 ```
-branch (IN, OUT) switch;
-
-I(IN, OUT) <+ V(switch) * transition(cond, 0, 10p);
+branch (IN, OUT) sw;
+I(IN, OUT) <+ V(sw) * transition(cond, 0, 10p);
 ```
 
-### `analysis()` — test current analysis type
-
-Returns 1 if the current analysis matches the argument:
+### `analysis()` — test analysis type
 ```
-if (analysis("ac"))
-    V(out) <+ gain * V(in);     // AC small-signal model
-else
-    V(out) <+ large_signal_expr; // DC/tran model
+if (analysis("ac")) V(out) <+ gain * V(in);
 ```
 
 ### `` `ifdef `` — conditional compilation
-
 ```
 `ifdef __VAMS_ENABLE__
-    iin = I(<vin>);             // VAMS syntax
+    iin = I(<vin>);
 `else
-    iin = I(vin, vin);          // standard syntax
+    iin = I(vin, vin);
 `endif
 ```
 
 ### `exclude` — parameter range exclusion
-
-Exclude specific values from a parameter range:
 ```
-parameter real gain = 1 from (-inf:inf) exclude 0;   // gain cannot be zero
-parameter integer dir = 1 from [-1:1] exclude 0;     // must be +1 or -1
+parameter real gain = 1 from (-inf:inf) exclude 0;
 ```
 
-### `current` type and `I()` single-node
-
-Declare current-type ports and read through-current of a single node:
+### `current` type / `I()` single-node
 ```
-output current iout;           // declares a current-type output
-I(iout) <+ gm * V(vin);       // single-node current contribution
+output current iout;
+I(iout) <+ gm * V(vin);
 ```
 
 ### `nature` — custom physical quantity
-
-Define custom natures for non-electrical domains (mechanical, thermal, etc.):
 ```
 nature Position
-    units = "m";
-    access = Pos;
-    abstol = 1u;
+    units = "m"; access = Pos; abstol = 1u;
 endnature
 ```
-
-Used in mechanical models (mass, spring, damper) and electromagnetic models.
 
 ---
 
 ## Domain Classification
 
-After writing the module code, scan the `analog begin` block to classify the module's domain.
-This determines which simulator can run it.
+Scan the `analog begin` block to classify the module's domain.
 
-### Construct → Domain mapping
+### Construct → Domain
 
-Every Verilog-A construct belongs to one of three categories:
+**Voltage-domain** (event-driven — EVAS):
+`V() <+`, `transition()`, `@(cross)`, `@(above)`, `@(timer)`, `@(initial_step)`,
+`@(final_step)`, `genvar`, arrays, `case`, `$abstime`, `$bound_step()`,
+`$display`/`$strobe`/`$finish`, `$fopen`/`$fstrobe`/`$fclose`, `$random()`,
+`last_crossing()`, `analysis()`
 
-**Voltage-domain only** (event-driven, no KCL solving needed — EVAS compatible):
+**Current-domain** (KCL solver — OpenVAF + ngspice):
+`I() <+`, `V(a,b) <+ I(a,b)*R`, `ddt()`, `idt()`, `idtmod()`, `laplace_nd()`,
+`limexp()`, `slew()`, `$vt`/`$temperature`, `flicker_noise()`, `white_noise()`,
+`branch`, `nature`/`discipline`
 
-| Construct | Purpose |
-|---|---|
-| `V(node) <+ transition(...)` | Digital output with smoothing |
-| `V(node) <+ expression` | Pure voltage assignment (no I/ddt) |
-| `@(cross(...))` | Edge detection event |
-| `@(above(...))` | Level-sensitive threshold event |
-| `@(timer(...))` | Periodic time event |
-| `@(initial_step)` | Initialization |
-| `@(final_step)` | End-of-simulation cleanup |
-| `transition()` | Signal smoothing |
-| `genvar` / `for` loops | Loop unrolling |
-| `integer` / `real` arrays | State storage |
-| `case/endcase` | Multi-way branch |
-| `$abstime` | Simulation time |
-| `$bound_step()` | Timestep control |
-| `$display` / `$strobe` / `$finish` | Debug output |
-| `$fopen` / `$fstrobe` / `$fclose` | File I/O |
-| `$random()` | Random number generation |
-| `last_crossing()` | Time of last threshold crossing |
-| `analysis()` | Analysis type test |
+**Domain-neutral** (either):
+`V()` read-only, `parameter`/`real`/`integer`, `if/else`/`for`/`generate`,
+`` `define ``/`` `ifdef ``/`` `include ``, math functions, `exclude`/`from`
 
-**Current-domain only** (requires SPICE/KCL solver — OpenVAF + ngspice):
-
-| Construct | Purpose |
-|---|---|
-| `I(a,b) <+` | Current contribution (KCL) |
-| `I(node) <+` | Single-node current |
-| `V(a,b) <+ I(a,b) * R` | Branch voltage as function of branch current |
-| `ddt()` | Time derivative (capacitance: `I <+ C*ddt(V)`) |
-| `idt()` | Time integral |
-| `idtmod()` | Modular integration |
-| `laplace_nd()` | S-domain transfer function |
-| `limexp()` | Convergence-safe exponential |
-| `slew()` | Rate limiter |
-| `$vt` / `$temperature` | Thermal constants |
-| `flicker_noise()` | 1/f noise |
-| `white_noise()` | Thermal noise |
-| `branch` | Named branch declaration |
-| `nature` / `discipline` | Custom physical domains |
-
-**Domain-neutral** (can appear in either domain):
-
-| Construct | Purpose |
-|---|---|
-| `V(node)` / `V(a,b)` (read only) | Read voltage — no contribution |
-| `parameter` / `real` / `integer` | Declarations |
-| `if/else` / `for` / `generate` | Control flow |
-| `` `define `` / `` `ifdef `` / `` `include `` | Preprocessor |
-| `abs()` / `sqrt()` / `sin()` / `cos()` / `exp()` / `ln()` / `pow()` / `tanh()` / `log()` / `min()` / `max()` | Math functions |
-| `$display` / `$strobe` | Debug (usable in both) |
-| `exclude` / `from [a:b]` | Parameter constraints |
-
-### Classification decision tree
+### Decision tree
 
 ```
-Scan the analog block for ALL constructs used, then:
-
-1. Has current-domain constructs?  (I() <+, ddt, idt, idtmod, laplace_nd, limexp, slew, branch, $vt)
-   YES → go to step 2
-   NO  → go to step 3
-
-2. Also has voltage-domain-only constructs?  (@(cross), transition, genvar, arrays)
-   YES → MIXED: reject — suggest splitting (see domain-routing.md § Mixed)
-   NO  → CURRENT-DOMAIN → route to OpenVAF + ngspice
-
-3. Has voltage-domain-only constructs?  (@(cross), transition, genvar, arrays, @(above), @(timer))
-   YES → VOLTAGE-DOMAIN → route to EVAS
-   NO  → Pure V(node) <+ expression → VOLTAGE-DOMAIN (default)
+1. Has current-domain constructs? (I() <+, ddt, idt, idtmod, laplace_nd, limexp, slew, branch)
+   YES → also has voltage-only? (@(cross), transition, genvar, arrays)
+         YES → MIXED: reject, suggest splitting (see domain-routing.md)
+         NO  → CURRENT-DOMAIN → OpenVAF + ngspice
+   NO  → VOLTAGE-DOMAIN → EVAS (or pure V() <+ expression default)
 ```
 
-**"either" categories** (DAC, PLL/Clock, Power & Switch) require code-level analysis — do not
-guess the domain from the category name alone. Check what constructs the generated code actually uses.
+"Either" categories (DAC, PLL, Power/Switch) require code-level analysis.
 
 ---
 
 ## Simulation Routing
 
-After classifying the domain, route the module to the correct simulator. See
-`references/domain-routing.md` for full details on each path. The voltage-domain
-simulator's actual capabilities are declared in `references/evas-capabilities.manifest`
-— that file is the single source of truth; if it has been updated, its contents
-override the snapshot below.
+See `references/domain-routing.md` for full details. EVAS capabilities declared in
+`references/evas-capabilities.manifest` (single source of truth).
 
-Decision tree:
-
-```
-IF code contains @(cross()) OR transition() OR genvar OR arrays:
-    IF code also contains I() <+:
-        → MIXED: reject — suggest splitting (see domain-routing.md § Mixed)
-    ELSE:
-        → VOLTAGE-DOMAIN: route to custom voltage-domain simulator
-          (see domain-routing.md § Voltage)
-
-ELSE IF code contains I() <+ OR ddt() OR idt() OR laplace_nd():
-    → CURRENT-DOMAIN: route to OpenVAF + ngspice
-      (see domain-routing.md § Current)
-
-ELSE:
-    → VOLTAGE-DOMAIN: pure V(node) <+ expression defaults to voltage domain
-```
-
-When routing:
-- **Voltage-domain** — the module is ready for the custom voltage-domain simulator as-is
-- **Current-domain** — delegate to the `openvaf` skill for compilation and simulation
-- **Mixed** — do NOT attempt simulation; explain the conflict and guide the user to split
-  the module into separate voltage-domain and current-domain sub-modules
+- **Voltage-domain** → ready for EVAS as-is
+- **Current-domain** → delegate to `openvaf` skill
+- **Mixed** → do NOT simulate; guide user to split (see domain-routing.md § Mixed)
 
 ---
 
 ## Smoke Test
 
-When the user asks to verify a module actually works (e.g., "run it", "test it",
-"confirm it compiles", "can you check this"), run a smoke test on the appropriate simulator.
+### Current-domain
+Delegate to `openvaf` skill: compile check → load check → tran sanity.
 
-### Current-domain smoke test
+### Voltage-domain
+EVAS in development (`evas_status` in `customize.md`). While unavailable:
+static check against `evas-capabilities.manifest` only.
 
-Delegate to the `openvaf` skill. The minimal verification is:
-
-1. **Compile check:** `openvaf <file>.va` — confirms syntax and construct compatibility
-2. **Load check:** generate a minimal ngspice netlist that instantiates the module, run
-   `ngspice -b` — confirms OSDI loading and port binding
-3. **Tran sanity:** if the module has a meaningful transient response, run a short `.tran`
-   and verify the output is non-zero / non-NaN
-
-Report: pass/fail for each step, with the first error message if any step fails.
-
-### Voltage-domain smoke test
-
-EVAS is still in development (`evas_status: in-development` in `customize.md`).
-While EVAS CLI is not yet available:
-
-1. **Static check only:** scan the module code and confirm no `[unsupported]` constructs
-   from `references/evas-capabilities.manifest` are present
-2. **Report compatibility:** tell the user "this module is EVAS-compatible (static check
-   passed)" or list the incompatible constructs found
-
-Once EVAS CLI is ready (`evas_status: ready`):
-
-1. **Compile check:** `evas compile <file>.va` (or configured `voltage_simulator_cmd`)
-2. **Run check:** `evas run <file>.va` with a minimal stimulus
-3. **Output sanity:** verify output waveform is non-trivial
-
-### Mixed-domain smoke test
-
-Do not attempt. Explain the conflict and refer to `domain-routing.md § Mixed` for
-the splitting guide.
+### Mixed-domain
+Do not attempt. Refer to `domain-routing.md § Mixed`.
 
 ---
 
 ## Customization
 
-Users can override default conventions (port naming, default parameters, header style) by
-editing `references/customize.md`. Read that file at the start of every session to pick up
-any project-specific settings.
+Read `references/customize.md` at session start for project-specific overrides
+(port naming, supply voltage, file headers, simulator config).
