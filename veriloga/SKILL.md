@@ -578,15 +578,81 @@ Used in mechanical models (mass, spring, damper) and electromagnetic models.
 After writing the module code, scan the `analog begin` block to classify the module's domain.
 This determines which simulator can run it.
 
-| Constructs present in `analog begin` | Domain |
-|---|---|
-| `V() <+` with `@(cross())` or `transition()`, and NO `I() <+` | **voltage** |
-| `I() <+` or `ddt()` / `idt()` / `laplace_nd()`, and NO `@(cross())` / `transition()` | **current** |
-| Both voltage-domain and current-domain constructs | **mixed → reject** |
-| Pure `V(node) <+ expression` with no `I() <+`, no `@(cross())`, no `transition()` | **voltage** |
+### Construct → Domain mapping
 
-**Special case:** `V(a,b) <+ I(a,b) * R` (branch voltage as function of branch current) is
-a current-domain construct — it requires a SPICE-class solver.
+Every Verilog-A construct belongs to one of three categories:
+
+**Voltage-domain only** (event-driven, no KCL solving needed — EVAS compatible):
+
+| Construct | Purpose |
+|---|---|
+| `V(node) <+ transition(...)` | Digital output with smoothing |
+| `V(node) <+ expression` | Pure voltage assignment (no I/ddt) |
+| `@(cross(...))` | Edge detection event |
+| `@(above(...))` | Level-sensitive threshold event |
+| `@(timer(...))` | Periodic time event |
+| `@(initial_step)` | Initialization |
+| `@(final_step)` | End-of-simulation cleanup |
+| `transition()` | Signal smoothing |
+| `genvar` / `for` loops | Loop unrolling |
+| `integer` / `real` arrays | State storage |
+| `case/endcase` | Multi-way branch |
+| `$abstime` | Simulation time |
+| `$bound_step()` | Timestep control |
+| `$display` / `$strobe` / `$finish` | Debug output |
+| `$fopen` / `$fstrobe` / `$fclose` | File I/O |
+| `$random()` | Random number generation |
+| `last_crossing()` | Time of last threshold crossing |
+| `analysis()` | Analysis type test |
+
+**Current-domain only** (requires SPICE/KCL solver — OpenVAF + ngspice):
+
+| Construct | Purpose |
+|---|---|
+| `I(a,b) <+` | Current contribution (KCL) |
+| `I(node) <+` | Single-node current |
+| `V(a,b) <+ I(a,b) * R` | Branch voltage as function of branch current |
+| `ddt()` | Time derivative (capacitance: `I <+ C*ddt(V)`) |
+| `idt()` | Time integral |
+| `idtmod()` | Modular integration |
+| `laplace_nd()` | S-domain transfer function |
+| `limexp()` | Convergence-safe exponential |
+| `slew()` | Rate limiter |
+| `$vt` / `$temperature` | Thermal constants |
+| `flicker_noise()` | 1/f noise |
+| `white_noise()` | Thermal noise |
+| `branch` | Named branch declaration |
+| `nature` / `discipline` | Custom physical domains |
+
+**Domain-neutral** (can appear in either domain):
+
+| Construct | Purpose |
+|---|---|
+| `V(node)` / `V(a,b)` (read only) | Read voltage — no contribution |
+| `parameter` / `real` / `integer` | Declarations |
+| `if/else` / `for` / `generate` | Control flow |
+| `` `define `` / `` `ifdef `` / `` `include `` | Preprocessor |
+| `abs()` / `sqrt()` / `sin()` / `cos()` / `exp()` / `ln()` / `pow()` / `tanh()` / `log()` / `min()` / `max()` | Math functions |
+| `$display` / `$strobe` | Debug (usable in both) |
+| `exclude` / `from [a:b]` | Parameter constraints |
+
+### Classification decision tree
+
+```
+Scan the analog block for ALL constructs used, then:
+
+1. Has current-domain constructs?  (I() <+, ddt, idt, idtmod, laplace_nd, limexp, slew, branch, $vt)
+   YES → go to step 2
+   NO  → go to step 3
+
+2. Also has voltage-domain-only constructs?  (@(cross), transition, genvar, arrays)
+   YES → MIXED: reject — suggest splitting (see domain-routing.md § Mixed)
+   NO  → CURRENT-DOMAIN → route to OpenVAF + ngspice
+
+3. Has voltage-domain-only constructs?  (@(cross), transition, genvar, arrays, @(above), @(timer))
+   YES → VOLTAGE-DOMAIN → route to EVAS
+   NO  → Pure V(node) <+ expression → VOLTAGE-DOMAIN (default)
+```
 
 **"either" categories** (DAC, PLL/Clock, Power & Switch) require code-level analysis — do not
 guess the domain from the category name alone. Check what constructs the generated code actually uses.
