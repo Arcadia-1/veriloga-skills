@@ -378,6 +378,199 @@ comp_var[1] = `FRAC_MM(seed1);
 
 Use `` `undef MACRO_NAME `` at the end of the module to avoid leaking macros to other files.
 
+### `@(final_step)` — end-of-simulation cleanup
+
+Paired with `@(initial_step)`. Fires once at the end of simulation for reporting,
+file closing, and summary output:
+```
+@(final_step) begin
+    $strobe("total samples = %d, average = %f", cnt, sum / cnt);
+    $fclose(file_handle);
+end
+```
+
+### `@(initial_step("analysis"))` — analysis-filtered initialization
+
+Restrict `@(initial_step)` to fire only during specific analyses:
+```
+@(initial_step("ac", "dc")) begin
+    r = 1K;
+    c = 1 / (2 * `PI * r * bandwidth);
+end
+```
+
+Valid analysis names: `"tran"`, `"ac"`, `"dc"`, `"noise"`, `"xf"`.
+
+### `$abstime` — absolute simulation time
+
+Returns the current simulation time as a `real`. Essential for time-dependent behavior:
+```
+phase = 2 * `PI * freq * $abstime;
+V(out) <+ amp * sin(phase);
+```
+
+### `$bound_step()` — timestep control
+
+Limits the maximum simulator timestep. Critical for signal sources to prevent
+the simulator from skipping cycles:
+```
+inst_freq = center_freq + vco_gain * V(vin);
+$bound_step(1.0 / (32 * inst_freq));   // at least 32 points per cycle
+```
+
+### `$display` / `$strobe` / `$finish` — debug and simulation control
+
+```
+$display("value = %f at t = %e", val, $abstime);   // print immediately
+$strobe("value = %f", val);                          // print at end of timestep
+$finish;                                              // terminate simulation
+```
+
+`$display` evaluates immediately; `$strobe` evaluates at the end of the current
+timestep (values are final). Use `$finish` for fatal error conditions.
+
+### File I/O: `$fopen` / `$fstrobe` / `$fclose`
+
+Log measurement data to files:
+```
+integer fh;
+
+@(initial_step)
+    fh = $fopen("output.dat", "w");
+
+@(timer(next_sample)) begin
+    $fstrobe(fh, "%e\t%e", $abstime, V(sig));
+end
+
+@(final_step)
+    $fclose(fh);
+```
+
+### `$vt` / `$temperature` — thermal constants
+
+```
+I(anode, cathode) <+ is * (limexp(V(anode, cathode) / $vt) - 1);
+// $vt = kT/q ≈ 25.86 mV at 300K
+// $temperature = simulation temperature in Kelvin
+```
+
+### `@(timer())` — periodic event
+
+Fires at a specified simulation time. Use for periodic sampling, code generation:
+```
+real next_sample;
+
+@(initial_step)
+    next_sample = 0;
+
+@(timer(next_sample)) begin
+    sampled_val = V(sig);
+    next_sample = next_sample + t_sample;
+end
+```
+
+### `idtmod()` — modular integration
+
+Like `idt()` but wraps the accumulator to prevent overflow. Essential for VCOs:
+```
+phase = idtmod(freq, 0, 1);          // integrates freq, wraps at 1
+V(out) <+ amp * sin(2 * `PI * phase);
+```
+
+### `slew()` — rate limiter
+
+Limits how fast a signal can change:
+```
+V(out) <+ slew(V(in), max_slope, -max_slope);
+// or single-argument (symmetric):
+V(out) <+ slew(V(in));
+```
+
+### `limexp()` — convergence-safe exponential
+
+Use instead of `exp()` in device models to avoid convergence failures:
+```
+I(anode, cathode) <+ is * (limexp(V(anode, cathode) / $vt) - 1);
+```
+
+### `last_crossing()` — time of last threshold crossing
+
+Returns the interpolated time when a signal last crossed zero:
+```
+real t_cross;
+t_cross = last_crossing(V(sig) - vth, +1);   // last rising crossing time
+period = $abstime - t_cross;
+```
+
+### `case/endcase` — multi-way branch
+
+Alternative to long `if/else` chains:
+```
+case (state)
+    0: begin out = vl; state = 1; end
+    1: begin out = vh; state = 2; end
+    2: begin out = vl; state = 0; end
+endcase
+```
+
+### `branch` — named branch
+
+Declare a named branch between two nodes for readability:
+```
+branch (IN, OUT) switch;
+
+I(IN, OUT) <+ V(switch) * transition(cond, 0, 10p);
+```
+
+### `analysis()` — test current analysis type
+
+Returns 1 if the current analysis matches the argument:
+```
+if (analysis("ac"))
+    V(out) <+ gain * V(in);     // AC small-signal model
+else
+    V(out) <+ large_signal_expr; // DC/tran model
+```
+
+### `` `ifdef `` — conditional compilation
+
+```
+`ifdef __VAMS_ENABLE__
+    iin = I(<vin>);             // VAMS syntax
+`else
+    iin = I(vin, vin);          // standard syntax
+`endif
+```
+
+### `exclude` — parameter range exclusion
+
+Exclude specific values from a parameter range:
+```
+parameter real gain = 1 from (-inf:inf) exclude 0;   // gain cannot be zero
+parameter integer dir = 1 from [-1:1] exclude 0;     // must be +1 or -1
+```
+
+### `current` type and `I()` single-node
+
+Declare current-type ports and read through-current of a single node:
+```
+output current iout;           // declares a current-type output
+I(iout) <+ gm * V(vin);       // single-node current contribution
+```
+
+### `nature` — custom physical quantity
+
+Define custom natures for non-electrical domains (mechanical, thermal, etc.):
+```
+nature Position
+    units = "m";
+    access = Pos;
+    abstol = 1u;
+endnature
+```
+
+Used in mechanical models (mass, spring, damper) and electromagnetic models.
+
 ---
 
 ## Domain Classification
