@@ -1,0 +1,40 @@
+`include "discipline.h"
+`include "constants.h"
+ 
+
+`define PI  	3.14159265358979323846264338327950288419716939937511
+
+//--------------------
+// lpf_1storder
+//
+// -  First order lowpass filter
+//
+// vin:   [V,A]
+// vout:  [V,A]
+//
+// INSTANCE parameters
+//    bandwidth = bandwidth of the filter [Hz]
+//
+// MODEL parameters
+//    {none}
+//
+
+module lpf_1storder(vin, vout);
+input vin;
+output vout;
+electrical vout, vin;
+parameter real bandwidth = 1;
+
+    real r;
+    real c;
+
+    analog begin
+	@(initial_step("tran","ac","dc")) begin
+    	    r = 1K;
+            c = 1/(2*`PI*r*bandwidth);
+	end
+
+	V(vout, vin) <+ r*I(vout, vin);
+	I(vout) <+ ddt(c*V(vout));
+    end
+endmodule

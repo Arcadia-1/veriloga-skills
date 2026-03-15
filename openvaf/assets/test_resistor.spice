@@ -1,0 +1,15 @@
+* Test circuit for OSDI resistor model
+* Run: ngspice test_resistor.spice
+
+.control
+pre_osdi ./myresistor.osdi
+dc V1 0 5 0.1
+plot -i(V1) title 'Current through 1k resistor'
+.endc
+
+V1 in 0 DC 1.0
+
+.model r1k myresistor r=1000
+Nr1 in 0 r1k
+
+.end

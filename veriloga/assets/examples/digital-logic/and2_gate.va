@@ -1,0 +1,42 @@
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module AND2(Y, VSS, VDD,A, B);
+output Y;
+voltage Y;
+inout VSS;
+voltage VSS;
+inout VDD;
+voltage VDD;
+input A;
+voltage A;
+input B;
+voltage B;
+
+parameter real tplh=10p from (0:inf);   // Prop delay time for rising output
+parameter real tphl=10p from (0:inf);   // Prop delay time for falling output
+parameter real tr=tplh from (0:2*tplh]; // rise time for gate output
+parameter real tf=tphl from (0:2*tphl]; // fall time for gate output
+parameter real jitter=0 from [0:min(tplh,tphl)];   // jitter
+
+real vth,td0,td,vout;
+integer seed;
+
+analog begin
+    @(initial_step) begin
+        vth = (V(VDD)+V(VSS))*0.5;
+        vout = V(A)>vth && V(B)>vth ? V(VDD) : V(VSS);
+        seed = -123;
+    end
+
+    @(cross(V(A)-vth,0) or cross(V(B)-vth,0));
+
+    vout = V(A)>vth && V(B)>vth ? V(VDD) : V(VSS);
+    td0 = vout>V(Y) ? tplh-tr*0.5 : tphl-tf*0.5;
+    td = jitter==0 && vout!= V(Y) ? td0 : td0+jitter*$rdist_normal(seed,0,1);
+        
+    V(Y) <+ transition(vout, td, tr, tf);
+end
+endmodule
+

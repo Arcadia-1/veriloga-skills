@@ -1,0 +1,29 @@
+// VerilogA for SAR_10bit, switch, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module switch(IN, OUT, C);
+ parameter VTH = 0.6 from ( 0 : inf );
+
+  inout  IN, OUT, C;
+  electrical  IN, OUT, C;
+  branch (IN, OUT) switch;
+
+  integer closed;
+  real cond; // conductance
+
+  analog begin
+    @(initial_step) begin
+      closed = 0;
+      cond = 1.0e-9;
+    end
+    closed = ( V( C ) > VTH ? 1 : 0 );
+    if ( closed )
+      cond = 1.0;
+    else
+      cond = 1.0e-9;
+    I( IN, OUT ) <+ V(switch)*transition( cond, 0, 10p );
+  end
+
+endmodule

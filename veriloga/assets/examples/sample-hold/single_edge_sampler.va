@@ -1,0 +1,65 @@
+// single_edge_sampler.va
+// Author: Miguel Gandara
+// samples a signal at either rising or falling edge of input clock
+`include "constants.vams"
+`include "disciplines.vams"
+module single_edge_sampler(
+  clk,
+  vin,
+  vout
+);
+  parameter direction = 1 from [-1:1] exclude 0;
+  parameter real vdd = 1.2;
+  parameter real tr = 100p;
+  parameter real tf = 100p;
+  parameter real td = 0;
+  parameter integer file_io = 0 from [0:1];
+  parameter string filename = "sampler.csv";
+  parameter integer num_skip_points = 0;
+
+  input clk; electrical clk;
+  input [10:0] vin; electrical [10:0] vin;
+  output [10:0] vout; electrical [10:0] vout;
+  integer file;
+  integer num_samples;
+
+  real vout_real [10:0] ;
+
+  genvar i;
+
+  analog begin
+    @(initial_step) begin
+      num_samples = 0;
+      if (file_io) begin
+        file = 0;
+        file = $fopen(filename, "w");
+        if (file == 0) begin
+          $display("could not open file %s", filename);
+          $finish(0);
+        end
+      end
+    end
+
+    @(cross(V(clk)-vdd/2,direction)) begin
+     num_samples = num_samples+1;
+	$fwrite(file, "%g", $abstime);
+	 for(i=10;i>-1;i=i-1) begin
+      	vout_real[i] = V(vin[i]);
+      	if ((num_samples > num_skip_points) && file_io) begin
+          	$fwrite(file, ",%g",V(vin[i]));
+      		end
+		end
+	$fwrite(file, "\n");
+    end 
+
+	for(i=0;i<11;i=i+1) begin
+    		V(vout[i]) <+ transition(vout_real[i], td, tr, tf);
+	end
+    @(final_step) begin
+      if (file_io) begin
+        $fclose(file);
+      end
+    end
+  end
+
+endmodule

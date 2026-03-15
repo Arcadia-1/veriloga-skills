@@ -1,0 +1,58 @@
+`include "discipline.h"
+`include "constants.h"
+
+ 
+ 
+
+ 
+`define PI  	3.14159265358979323846264338327950288419716939937511
+
+
+
+//--------------------
+// swept_sine_src
+//
+// -  Swept sinusoidal source
+//
+// sigout_p,sigout_n:	output (val,flow)
+//
+// INSTANCE parameters
+//    start_freq       = start frequency [Hz]
+//    sweep_rate       = rate of increase in frequency [Hz/s]
+//    amp              = amplitude of output sinusoid (val)
+//    points_per_cycle = number of points in a cycle of the output []
+//
+// MODEL parameters
+//    {none}
+//
+// The instanteous frequency of the output is 'sweep_rate' * 'time' plus
+// 'start_freq'.
+//
+
+module swept_sine_src(sigout_p,sigout_n);
+output sigout_p,sigout_n;
+electrical sigout_p,sigout_n;
+parameter real start_freq = 1 from (0:inf);
+parameter real sweep_rate = 1;
+parameter real amp = 1 from (0:inf);
+parameter real points_per_cycle = 1M from [6:inf];
+    real freq;
+    real phase;
+
+    analog begin
+	phase   = 2*`PI*(start_freq + sweep_rate / 2 * $abstime)*$abstime;
+
+	freq = start_freq + sweep_rate * $abstime  ; // = d/dt(phase)
+        
+        V(sigout_p,sigout_n) <+ amp*sin(phase);
+
+        if (points_per_cycle != 1M) begin
+	   // ensure that model is evaluated sufficiently often
+	   $bound_step(1 / (freq*points_per_cycle));
+        end
+    end
+endmodule
+
+
+
+

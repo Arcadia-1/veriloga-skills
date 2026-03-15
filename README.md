@@ -1,122 +1,61 @@
 # veriloga-skills
 
-Agent skills for veriloga
+Agent skill package for writing Verilog-A behavioral modules.
 
-## Documentation
+## The Skill: `veriloga/`
 
-- [Agent Skill Format](./agent-skill-format.md) - Standard format for documenting agent skills
+A complete skill package that teaches any coding agent to write production-quality Verilog-A. Covers 12 circuit categories with patterns extracted from 1,638 real-world designs.
 
-## About
+**Install:** Point your agent at `veriloga/SKILL.md`.
 
-This repository contains agent skills for the veriloga project. Each skill is documented following a standardized markdown format to ensure consistency and ease of use.
+**Customize:** Edit `veriloga/references/customize.md` to override port naming, supply voltage, file headers, and simulator-specific settings.
 
-## Getting Started
-
-To add a new skill:
-
-1. Read the [Agent Skill Format](./agent-skill-format.md) documentation
-2. Create a new markdown file following the template
-3. Document all required sections
-4. Submit your skill for review
-
-## Structure
+### What's Inside
 
 ```
-veriloga-skills/
-├── agent-skill-format.md    # Format specification and template
-├── README.md                 # This file
-└── skills/                   # Individual skill files (to be added)
-```
-# Verilog-A Skills
-
-Agent skills and reference examples for Verilog-A hardware description language.
-
-## Overview
-
-This repository contains comprehensive guidelines, examples, and best practices for writing proper Verilog-A code. It serves as a reference for developers and AI agents working with Verilog-A modules.
-
-## Contents
-
-### 📚 Documentation
-
-- **[VERILOG_A_GUIDELINES.md](VERILOG_A_GUIDELINES.md)** - Complete guidelines for Verilog-A coding standards
-
-### ✅ Correct Examples (`examples/correct/`)
-
-Working examples that follow all Verilog-A guidelines:
-
-- **counter_8bit.va** - 8-bit counter with proper variable declarations and edge detection
-- **shift_register.va** - 4-bit shift register demonstrating data shifting
-- **buffer.va** - Simple buffer with supply voltage tracking
-- **edge_detector.va** - Rising and falling edge detection patterns
-- **state_machine_example.va** - Complete state machine with multiple outputs and comprehensive documentation
-
-### ❌ Incorrect Examples (`examples/incorrect/`)
-
-Common mistakes to avoid, with explanations:
-
-- **wrong_var_location.va** - Variables declared inside `analog begin` (WRONG)
-- **wrong_loop_var.va** - Using `integer` instead of `genvar` for loops
-- **wrong_power_ports.va** - Incorrect power port declarations
-- **wrong_edge_direction.va** - Wrong cross direction for edge detection
-- **uninitialized_vars.va** - Missing variable initialization
-
-## Key Guidelines
-
-### Essential Rules
-
-1. **All signals**: Use `electrical` type
-2. **Power ports**: Always include VDD/VSS as `inout` (not `input`)
-3. **Variable declarations**: ALL variables at module level, BEFORE `analog begin`
-4. **Loop variables**: Use `genvar` (not `integer`) for loop indices
-5. **Initialization**: Always initialize state variables with `@(initial_step)`
-6. **Edge detection**: Use `@(cross(V(sig) - vth, +1))` for rising, `-1` for falling
-
-### Module Template
-
-```verilog
-module example (
-    inout electrical VDD,
-    inout electrical VSS,
-    input electrical in_i,
-    output electrical out_o
-);
-    // ALL declarations at module level
-    parameter real vth = 0.5;
-    integer state;
-    real vh_actual, vl_actual;
-    genvar i;
-    
-    analog begin
-        // Read supply voltages
-        vh_actual = V(VDD);
-        vl_actual = V(VSS);
-        
-        // Initialize
-        @(initial_step) state = 0;
-        
-        // Logic here...
-    end
-endmodule
+veriloga/
+├── SKILL.md                        # 8 mandatory rules, category index, common pitfalls
+├── assets/
+│   ├── template.va                 # Starter module skeleton
+│   └── examples/                   # 31 representative .va files across 12 categories
+│       ├── adc-sar/                #   SAR behavioral, CDAC, comparator, sync/async logic
+│       ├── dac/                    #   Binary-weighted, single-ended, differential
+│       ├── comparator/             #   Latching, noise-aware with offset modeling
+│       ├── pll-clock/              #   Frequency divider, phase-frequency detector
+│       ├── sample-hold/            #   Minimal S&H, multi-bit edge sampler
+│       ├── amplifier-filter/       #   Differential amplifier, 1st-order LPF
+│       ├── digital-logic/          #   AND gate with jitter, DFF with set/reset
+│       ├── signal-source/          #   Data generator, swept sine source
+│       ├── passive-model/          #   RLC network, Shockley diode
+│       ├── testbench-probe/        #   Timing probe, comparator offset search
+│       ├── power-switch/           #   Conductance switch, current clamp
+│       └── calibration/            #   SPI trim register, DAC code generator
+└── references/
+    ├── customize.md                # Your project-specific overrides
+    └── categories/                 # Per-category patterns & code examples
+        ├── adc-sar.md              #   SAR logic, pipeline, CDAC
+        ├── dac.md                  #   Binary-weighted, thermometer, current-steering
+        ├── comparator.md           #   StrongARM, dynamic, hysteresis
+        ├── pll-clock.md            #   VCO, divider, charge pump, PFD
+        ├── sample-hold.md          #   Ideal S&H, bottom-plate, bootstrap
+        ├── amplifier-filter.md     #   Opamp, OTA, LPF/BPF/HPF
+        ├── digital-logic.md        #   Gates, DFF, counter, shift register, FSM
+        ├── signal-source.md        #   AM/FM modulator, pulse gen, ramp
+        ├── passive-model.md        #   R/C/L, mismatch, tempco, controlled sources
+        ├── testbench-probe.md      #   TB wrappers, probes, measurement
+        ├── power-switch.md         #   Ideal switch, T-gate, bootstrap, switched-cap
+        └── calibration.md          #   Trim code gen, foreground/background cal
 ```
 
-## Usage
+## Companion Skill: `openvaf/`
 
-### For Developers
+Teaches agents to compile Verilog-A modules with OpenVAF and simulate them via ngspice/OSDI. Covers the compile-load-simulate flow, supported features, and troubleshooting.
 
-Use this repository as a reference when writing Verilog-A modules. Check the correct examples for patterns and the incorrect examples to avoid common mistakes.
+**Install:** Point your agent at `openvaf/SKILL.md`.
 
-### For AI Agents
+## Other Docs
 
-This repository provides structured guidelines and examples for generating or validating Verilog-A code. Follow the patterns in `examples/correct/` and avoid the pitfalls shown in `examples/incorrect/`.
-
-## Common Pitfalls
-
-❌ Variables inside `analog begin`  
-❌ `integer` for loop variables (use `genvar`)  
-❌ VDD/VSS as `input` (use `inout`)  
-❌ Missing `@(initial_step)` initialization  
-❌ Wrong `@(cross())` direction (+1 = rising, -1 = falling)  
+- [Agent Skill Format](./agent-skill-format.md) — General template for documenting any agent skill
 
 ## License
 

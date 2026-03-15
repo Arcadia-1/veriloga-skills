@@ -1,0 +1,18 @@
+* Test circuit for OSDI square-law MOSFET
+* Id-Vds family curves, batch mode
+
+.control
+pre_osdi ./example_mosfet.osdi
+dc Vds 0 3 0.1 Vgs 0.5 2.0 0.5
+print -i(Vds)
+quit
+.endc
+
+Vds  drain 0 DC 0
+Vgs  gate 0 DC 1.0
+
+.model nch nmos_sq Kp=200e-6 Vth0=0.5 lambda=0.02 gamma=0.4 phi=0.6 W=10e-6 L=1e-6
+
+Nm1 drain gate 0 0 nch
+
+.end

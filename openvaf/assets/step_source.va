@@ -1,0 +1,28 @@
+// Step voltage source for OpenVAF demo.
+// Outputs a smooth step from v_lo to v_hi at time t_step,
+// using tanh for a continuous transition (simulator-friendly).
+// Compile: openvaf step_source.va
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module step_source(p, n);
+    inout p, n;
+    electrical p, n;
+
+    parameter real v_lo   = 0.0;       // initial voltage [V]
+    parameter real v_hi   = 1.8;       // final voltage [V]
+    parameter real t_step = 5e-6;      // step time [s]
+    parameter real t_rise = 50e-9;     // 10-90% rise time [s]
+
+    real v_out, k;
+
+    analog begin
+        // tanh transition: k controls steepness
+        k     = 2.2 / t_rise;
+        v_out = v_lo + (v_hi - v_lo) * 0.5 * (1.0 + tanh(k * ($abstime - t_step)));
+
+        V(p, n) <+ v_out;
+    end
+
+endmodule

@@ -1,0 +1,42 @@
+`include "discipline.h"
+`include "constants.h"
+
+ 
+ 
+
+
+
+
+//--------------------
+// diode_simple
+//
+// -  Diode based on Schockley equation
+//
+// vanode:	Anode voltage [V,A]
+// vcathode:	Cathode voltage [V,A]
+//
+// INSTANCE parameters
+//    is   = saturation current with negative bias [A]
+//
+// MODEL parameters
+//    {none}
+//
+
+module diode_simple(vp, vn);
+inout vp, vn;
+electrical vp, vn;
+parameter real is = 1e-12 from (0:inf);
+
+   real vacross;
+
+   analog begin
+      vacross = V(vp, vn);
+      I(vp,vn) <+ is * (limexp(vacross/$vt) - 1);
+   end
+endmodule
+
+
+
+
+
+

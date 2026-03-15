@@ -1,0 +1,45 @@
+// VerilogA for two_stage_pipesar, COMP_VA, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module COMP_VA (INN,INP,VOP,VON,RST,VDD,VSS);
+
+parameter real tau = 10p    from (0 : inf);
+parameter real trise = 10p  from (0 : inf);
+parameter real tfail = 10p  from (0 : inf);
+
+input INN,INP,RST;
+output VON,VOP;
+inout VDD,VSS;
+ 
+electrical INN,INP,VOP,VON,RST,VDD,VSS;
+
+real outp,outn,t_delay,delta_vin;
+
+analog begin
+    @(initial_step) begin
+    outp = 1;
+    outn = 1;
+    t_delay =0;
+    end 
+
+   @(cross(V(RST)-0.5 , 1)) begin
+     outp = 1;
+    outn = 1;
+    t_delay = 40p;
+   end
+
+   @(cross(V(RST)-0.5 , -1)) begin
+    delta_vin = abs(V(INP)-V(INN));
+	t_delay   =100p;
+    outp = (V(INP) > V(INN) ) ? V(VDD) :V(VSS);
+    outn = (V(INP) > V(INN) ) ? V(VSS) :V(VDD); 
+   end
+
+V(VOP) <+ transition (outp,t_delay,trise,tfail);
+V(VON) <+ transition (outn,t_delay,trise,tfail);
+end
+
+
+endmodule

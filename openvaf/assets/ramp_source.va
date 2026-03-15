@@ -1,0 +1,32 @@
+// Ramp voltage source for OpenVAF demo.
+// Outputs a linear ramp from v_lo to v_hi over duration t_ramp,
+// starting at time t_start.
+// Compile: openvaf ramp_source.va
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module ramp_source(p, n);
+    inout p, n;
+    electrical p, n;
+
+    parameter real v_lo    = 0.0;       // starting voltage [V]
+    parameter real v_hi    = 1.8;       // ending voltage [V]
+    parameter real t_start = 1e-6;      // ramp start time [s]
+    parameter real t_ramp  = 8e-6;      // ramp duration [s]
+
+    real v_out, frac;
+
+    analog begin
+        if ($abstime < t_start)
+            v_out = v_lo;
+        else if ($abstime < t_start + t_ramp) begin
+            frac  = ($abstime - t_start) / t_ramp;
+            v_out = v_lo + (v_hi - v_lo) * frac;
+        end else
+            v_out = v_hi;
+
+        V(p, n) <+ v_out;
+    end
+
+endmodule

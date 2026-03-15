@@ -1,0 +1,80 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_ADC_BITS	4
+`default_transition 10p
+
+module L3_logic_4b_async (input electrical CLKC, input electrical CLKS, input electrical DCMPP, input electrical DCMPN, output electrical CMPCK, 
+output electrical [`NUM_ADC_BITS-1:0] DO, output electrical [`NUM_ADC_BITS-1:1] DCTRLP, output electrical [`NUM_ADC_BITS-1:1] DCTRLN);
+
+parameter real vdd = 1, t_logic_delay = 200p;
+integer step, cmpck;
+integer dout[`NUM_ADC_BITS-1:0], dctrlp[`NUM_ADC_BITS-1:1], dctrln[`NUM_ADC_BITS-1:1];
+genvar i;
+
+analog begin
+	// initialization and reset when CLKS goes up
+	@ (initial_step or cross(V(CLKS)-vdd/2,+1)) begin
+		step = `NUM_ADC_BITS-1;
+		for(i = 1; i <= `NUM_ADC_BITS-1; i = i+1) begin
+			dctrlp[i] = 0; dctrln[i] = 0;
+		end
+		$strobe("[Reset]");
+	end
+
+	// start SAR conversion
+	@ (cross(V(CLKC)-vdd/2, +1)) begin	
+		cmpck = 1;
+		$strobe("[cmpck goes up]");
+	end
+
+	// 1) comparator output occuring
+	@(cross(V(DCMPP) - vdd/2, +1) or cross(V(DCMPN) - vdd/2, +1)) begin
+		$strobe("[step = %d] cmp ouput up", step);
+
+		// close comparator
+		cmpck = 0;
+		$strobe("[cmpck goes down]");
+		
+		// generate digital output code for the current bit
+		if (step >= 0) begin	
+			dout[step] = V(DCMPP) > V(DCMPN);
+		end
+
+		// control CDAC	
+		if (step >= 1) begin
+			if(dout[step] > vdd/2)  begin
+				dctrln[step] = 1;
+			end else begin
+				dctrlp[step] = 1;
+			end
+		end
+
+	end
+
+	// 2) comparator output reset
+	@(cross(V(DCMPP) - vdd/2, -1) or cross(V(DCMPN) - vdd/2, -1)) begin
+		$strobe("[step = %d] cmp ouput down\n", step);
+		step = step - 1;
+
+		// activate comparator for the next comparison
+		if(step >= 0) begin
+			cmpck = 1;
+			$strobe("[cmpck goes up]");
+		end
+	end
+
+	// assign the output voltages
+    V(CMPCK) <+ transition(cmpck * vdd, t_logic_delay);
+
+    for(i = 1; i <= `NUM_ADC_BITS-1; i = i+1) begin
+        V(DCTRLP[i]) <+ transition(dctrlp[i] * vdd);
+        V(DCTRLN[i]) <+ transition(dctrln[i] * vdd);
+    end
+
+    for(i = 0; i <= `NUM_ADC_BITS-1; i = i+1) begin
+	    V(DO[i]) <+ transition(dout[i] * vdd);
+    end
+end
+
+endmodule

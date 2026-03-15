@@ -1,0 +1,39 @@
+// VerilogA for PLL_SIM, PFD_va, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module PFD_va(ref,div,up,down);
+input ref,div;
+output up,down;
+electrical ref,div,up,down,reset;
+
+parameter real Vlo=0, Vhi=1.2;
+parameter real Vth = 0.6;
+parameter real gdelay = 30p;
+parameter real gdelayreset = 50p;
+parameter real tt = 10p;
+integer refreg,divreg;
+analog begin
+     @(initial_step) begin
+		refreg = 0;
+		divreg = 0;
+	end
+    @(cross(V(ref)-Vth,+1)) begin
+            refreg = 1;
+    end
+
+    @(cross(V(div)-Vth,+1)) begin
+            divreg = 1;
+    end
+    
+    @(cross(V(reset)-Vth,+1)) begin
+            refreg = 0;         
+			divreg = 0;
+    end
+
+V(up)<+ transition(refreg?Vhi:Vlo,gdelay,tt);
+V(down)<+ transition(divreg?Vhi:Vlo,gdelay,tt);
+V(reset)<+ transition(divreg&&refreg?Vhi:Vlo,gdelayreset,tt);
+end
+endmodule

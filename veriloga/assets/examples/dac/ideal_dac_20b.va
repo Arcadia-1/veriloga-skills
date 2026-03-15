@@ -1,0 +1,57 @@
+// VerilogA for DAC, ideal_dac_20b, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module ideal_dac_20b(VDD, GND, DIN_MSB[62: 0], DIN_LSB[13: 0], VOUTP, VOUTN);
+
+inout VDD;
+electrical VDD;
+inout GND;
+electrical GND;
+input DIN_MSB[62: 0];
+electrical DIN_MSB[62: 0];
+input DIN_LSB[13: 0];
+electrical DIN_LSB[13 :0];
+output VOUTP;
+electrical VOUTP;
+output VOUTN;
+electrical VOUTN;
+
+parameter real n_msb = 6;
+parameter real n_lsb = 14;
+
+real vh, vl, vtrans, vref;
+real voutp, voutn;
+
+genvar k;
+
+analog begin
+	@(initial_step) begin
+		vh = V(VDD);
+		vl = V(GND);
+		vtrans = 0.5* (V(VDD) - V(GND));
+		vref = V(VDD) - V(GND);
+	end
+
+	voutp = 0;
+	voutn = 0;
+	for(k=0; k<(2**n_msb-1); k=k+1) begin
+		if(V(DIN_MSB[k]) > vtrans)
+			voutp = voutp + vref/(2**n_msb);
+		else
+			voutn = voutn + vref/(2**n_msb);
+	end
+	for(k=n_lsb-1; k>-1; k=k-1) begin
+		if(V(DIN_LSB[k]) > vtrans)
+			voutp = voutp + vref*(2**k)/(2**(n_msb+n_lsb));
+		else
+			voutn = voutn + vref*(2**k)/(2**(n_msb+n_lsb));
+	end
+
+	V(VOUTP) <+ transition(voutp , 0, 20p);
+	V(VOUTN) <+ transition(voutn , 0, 20p);
+
+end
+
+endmodule

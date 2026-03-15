@@ -1,0 +1,30 @@
+// VerilogA for behaviour, VPROBE, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module TPROBE(N, P);
+inout N;
+electrical N;
+inout P;
+electrical P;
+integer hf;
+parameter real output_start=0 from [0:inf);
+parameter real vth=0;
+parameter integer direction=1 from [-1:1];
+real prev;
+analog begin
+    @ (initial_step)
+        hf=$fopen("%I.dat","w");
+
+    @ (cross(V(P,N)-vth,direction, 1e-12)) begin
+        if($abstime>output_start)
+            $fwrite(hf, "%0.10e\n", $abstime-prev);
+        prev=$abstime;
+    end
+
+    @ (final_step)
+        $fclose(hf);
+end
+
+endmodule

@@ -1,0 +1,35 @@
+// Voltage-dependent capacitor (varactor) for OpenVAF compilation demo.
+// C(V) = Cmin + (Cmax-Cmin)/2 * (1 + tanh((V-V0)/Vslope))
+// Charge-based formulation using ddt() for simulator compatibility.
+// Compile: openvaf varactor.va → produces varactor.osdi
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module varactor(p, n);
+    inout p, n;
+    electrical p, n;
+
+    parameter real Cmin   = 0.5e-12  from (0:inf);  // minimum capacitance [F]
+    parameter real Cmax   = 2.0e-12  from (0:inf);  // maximum capacitance [F]
+    parameter real V0     = 0.0;                      // center voltage [V]
+    parameter real Vslope = 0.3      from (0:inf);   // transition slope [V]
+    parameter real Rs     = 5.0      from (0:inf);   // series resistance for Q [Ohm]
+
+    real Vp, Cv, Q;
+
+    analog begin
+        Vp = V(p, n);
+
+        // Voltage-dependent capacitance
+        Cv = Cmin + (Cmax - Cmin) / 2.0 * (1.0 + tanh((Vp - V0) / Vslope));
+
+        // Charge-based contribution: I = dQ/dt = d(C*V)/dt
+        Q = Cv * Vp;
+        I(p, n) <+ ddt(Q);
+
+        // Series resistance (models quality factor)
+        I(p, n) <+ Vp / Rs;
+    end
+
+endmodule

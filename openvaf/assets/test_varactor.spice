@@ -1,0 +1,15 @@
+* Test circuit for OSDI varactor model
+* DC sweep to verify current, AC sweep for impedance
+
+.control
+pre_osdi ./example_varactor.osdi
+dc Vbias -1 1 0.1
+print i(Vbias)
+quit
+.endc
+
+Vbias in 0 DC 0 AC 1
+.model var1 varactor Cmin=0.5e-12 Cmax=2e-12 V0=0 Vslope=0.3 Rs=5
+Nv1 in 0 var1
+
+.end

@@ -1,0 +1,60 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module L3_SPI_TRIM_40b(VDD, GND, SCKI, SCKO, SDI, SDO, OUT, RST);
+
+real vth, vh, vl;
+parameter td = 30p;
+parameter tr = 30p;
+parameter tf = 30p;
+
+parameter conf = "";
+parameter n_out = 40; 
+
+
+
+
+inout VDD, GND;
+input SCKI, SDI, RST;
+output SDO, SCKO;
+output [39:0] OUT; // Big-endian
+
+electrical VDD, GND, SCKI, SCKO, SDI, SDO, RST;
+electrical [39:0] OUT;
+
+integer n_conf, k;
+integer out[39:0];
+
+genvar i;
+
+analog begin
+
+	@(initial_step) begin
+		vh = V(VDD);
+		vl = V(GND);
+		vth = (vh + vl) / 2;
+		n_conf = conf.len();
+
+		for(k = 0; k < n_out; k = k+1) begin
+			out[n_out-1-k] = (conf.substr(k,k) == "1");
+			$strobe("TRIM out[%d] = %d", n_out-1-k, out[n_out-1-k]);
+		end
+
+	end
+
+	for(i = 0; i < n_out; i = i+1) begin
+		V(OUT[i]) <+ transition(out[i] ? vh : vl, td, tr, tf);
+	end
+
+	@(cross(V(SCKI)-vth, +1)) begin
+		for(i = n_out-1; i > 0; i = i-1) begin
+			out[i] = out[i-1];
+		end
+		out[0] = (V(SDI) > vth);
+	end
+
+	V(SDO) <+ transition(out[n_out-1] ? vh : vl, td, tr, tf);
+	V(SCKO) <+ transition((V(SCKI) > vth) ? vh : vl, td, tr, tf);
+end	
+
+endmodule

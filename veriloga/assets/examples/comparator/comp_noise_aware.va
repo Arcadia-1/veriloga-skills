@@ -1,0 +1,56 @@
+// VerilogA for ZIC_ADC, L3_comparator_V1, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module L3_comparator_FV(DOUTP, DOUTN, GND, VDD, CLK, VINN, VINP);
+output DOUTP;
+electrical DOUTP;
+output DOUTN;
+electrical DOUTN;
+inout GND;
+electrical GND;
+inout VDD;
+electrical VDD;
+input CLK;
+electrical CLK;
+input VINN;
+electrical VINN;
+input VINP;
+electrical VINP;
+
+parameter real td = 50p;
+parameter real tr = 50p;
+parameter real vos = 0;
+parameter real vn = 0;
+parameter real seed_init = 0;
+
+real vh, vl, vth;
+integer d = 0;
+integer seed;
+
+
+analog begin
+
+	@(initial_step) begin
+		vh = V(VDD);
+		vl = V(GND);
+		vth = (vh + vl) / 2;
+		seed = seed_init;
+	end
+
+	@(cross(V(CLK)-vth,+1)) begin
+		d = V(VINP)-V(VINN) > vos+$rdist_normal(seed, 0, vn);
+	end
+
+	@(above(vth-V(CLK))) begin
+		d = 0;
+	end
+	
+	V(DOUTP) <+ transition(d ? vh : vl, td, tr);
+	V(DOUTN) <+ transition(d ? vl : vh, td, tr);
+
+end
+
+
+endmodule

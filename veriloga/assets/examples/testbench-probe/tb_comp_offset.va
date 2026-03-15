@@ -1,0 +1,36 @@
+// VerilogA for RHSAR28T, tb_COMP_OFFSET, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module tb_comp_offset (CLK, VOUT, VINP, VINN);
+
+input  CLK, VOUT;
+output VINP, VINN;
+
+electrical CLK, VOUT;
+electrical VINP, VINN;
+
+
+parameter vdd = 1;
+parameter VINCM = 0.5;
+
+real vin = 0, step = 10m;
+integer state = 1, sign = 1;
+
+analog begin
+
+	@(cross(V(CLK)-0.5*vdd, -1)) begin
+		sign = V(VOUT) < 0.5 *vdd;
+		if((state != sign) && (step > 0u))
+			step = step/2;
+		state = sign;
+		vin = vin +(2*state-1) *step;
+	end
+	V(VINP) <+ (VINCM + 0.5*vin);
+	V(VINN) <+ (VINCM - 0.5*vin);
+
+end
+
+endmodule
+

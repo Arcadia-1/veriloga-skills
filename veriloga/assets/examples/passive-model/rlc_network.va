@@ -1,0 +1,19 @@
+// VerilogA for solutions, rlc, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module rlc (in, out, ref);
+inout in, out, ref;
+electrical in, out, ref;
+parameter real C = 1e-12 ;
+parameter real L = 1e-09 ;
+parameter real R = 1000 ;
+
+electrical n1;
+   analog begin
+        V(in,n1) <+ R*I(in,n1);
+        V(n1,out) <+ L*ddt(I(n1,out));
+        I(out,ref) <+ C*ddt(V(out,ref));
+   end
+endmodule

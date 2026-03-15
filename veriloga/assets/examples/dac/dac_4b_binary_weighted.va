@@ -1,0 +1,37 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_ADC_BITS 4
+`default_transition 30p
+
+module _va_dac_4b_se(input electrical[`NUM_ADC_BITS-1:0] DIN,input electrical RDY,output electrical AOUT);
+
+real weight[`NUM_ADC_BITS-1:0] = {4, 2, 1, 0.5};
+real sum;
+
+parameter real vdd = 1, vth = 0.5;
+
+real aout;
+genvar i;
+
+analog begin
+	//reset
+	@(initial_step) begin
+		sum = weight[0];
+		for(i = `NUM_ADC_BITS-1; i >= 0; i = i-1) begin
+			sum = sum + weight[i];
+		end
+	end
+
+	//update when data (digital output code of ADC) is ready
+	@(cross(V(RDY)-vth,+1)) begin
+		aout = 0;
+		for(i = `NUM_ADC_BITS-1; i >= 0; i = i-1) begin
+			aout = aout + (V(DIN[i]) > vth) * weight[i];
+		end
+		aout = (aout/sum*2-1) * vdd;
+	end
+	V(AOUT) <+ transition(aout,0);
+end
+
+endmodule

@@ -1,0 +1,35 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 30p
+
+module L2_cdac_4b_ideal(input electrical VIN, input electrical CLKS, input electrical [3:1] DCTRL, output electrical VRES);
+
+parameter real vdd = 1, vrefp = 1, vrefn = 0;
+real vres;
+
+analog begin
+
+	// track (sample) when CLKS=1, hold (store) when CLKS goes down
+	@ (initial_step or cross(V(CLKS)-vdd/2,-1)) begin
+		vres = V(VIN);
+	end
+
+	// ajdust vres according to DCTRL
+	@ (cross(V(DCTRL[3])-vdd/2, +1)) begin
+		vres = vres + 0.5 * (vrefp - vrefn);
+	end
+
+	@ (cross(V(DCTRL[2])-vdd/2, +1)) begin
+		vres = vres + 0.25 * (vrefp - vrefn);
+	end
+
+	@ (cross(V(DCTRL[1])-vdd/2, +1)) begin
+		vres = vres + 0.125 * (vrefp - vrefn);
+	end
+
+	// output voltage assignment
+	V(VRES) <+ transition(vres,0);
+end
+
+endmodule

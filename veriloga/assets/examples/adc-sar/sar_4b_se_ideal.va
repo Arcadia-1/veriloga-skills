@@ -1,0 +1,52 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_ADC_BITS 4
+
+module sar_4b_se_ideal(input electrical VIN, input electrical CLKS, output electrical [`NUM_ADC_BITS:1] DOUT);
+
+parameter real vdd = 1;
+real vsampled, vth_cmp;
+integer dout [`NUM_ADC_BITS:1];
+genvar i;
+
+analog begin
+	// reset digital output
+	@(initial_step or cross(V(CLKS)-vdd/2,+1)) begin
+		$strobe("[reset]");
+		for (i = `NUM_ADC_BITS; i >= 1; i = i - 1) begin
+			dout[i] = 0;
+		end
+	end
+		
+	// track phase (sampling)
+	if (V(CLKS) > vdd/2) begin
+		vsampled = V(VIN);
+	end
+
+	// conversion phase
+	@(cross(V(CLKS)-vdd/2,-1)) begin
+		vth_cmp = vdd / 2;
+
+		// start successive approximation conversion (binary search)
+		for (i=1; i<=`NUM_ADC_BITS; i=i+1) begin
+			$strobe("[step=%d] vsampled = %0.4f, comparison threshold = %0.4f", i, vsampled, vth_cmp);
+
+			if (vsampled > vth_cmp) begin
+				dout[`NUM_ADC_BITS-i+1] = 1;
+				vth_cmp = vth_cmp + vdd/(pow(2.0,i+1));
+			end else begin
+				dout[`NUM_ADC_BITS-i+1] = 0;
+				vth_cmp = vth_cmp - vdd/(pow(2.0,i+1));
+			end
+
+		end
+	end
+	
+	// output assignment
+	for (i = `NUM_ADC_BITS; i >= 1 ; i = i - 1) begin
+		V(DOUT[i]) <+ transition(dout[i]);
+	end
+end	
+	
+endmodule

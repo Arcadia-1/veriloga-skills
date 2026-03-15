@@ -1,0 +1,29 @@
+// VerilogA for ADC_LIB, L4_DACSW_VA, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module L4_DFF_VA(SETB,RSTB,CLK,VDD,GND,D,Q,QB);
+inout SETB,RSTB,CLK,VDD,GND,D,Q,QB;
+electrical SETB,RSTB,CLK,VDD,GND,D,Q,QB;
+
+parameter real tr = 10p;
+parameter real td = 0;
+real vh,vl,vth;
+integer vd, vq;
+
+analog begin
+	vh = V(VDD);
+	vl = V(GND);
+	vth = (vh + vl) / 2;
+	vd = (V(D) - vth > 0);
+	if ( (V(RSTB)-vth) < 0 ) begin vq = 0; end
+	if ( (V(SETB)-vth) < 0 ) begin vq = 1; end
+	@cross(V(CLK) - vth, +1) begin
+		vq = vd;
+	end
+	V(Q)  <+ transition(vq ? vh : vl, td, tr);
+	V(QB) <+ transition(vq ? vl : vh, td, tr);
+	
+end
+endmodule

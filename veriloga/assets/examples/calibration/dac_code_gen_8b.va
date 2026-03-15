@@ -1,0 +1,47 @@
+// VerilogA for IDEAL_MODEL, DAC_8B_CODE_GEN, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module DAC_8B_CODE_GEN(CLKS,DIN);
+input CLKS;
+output [7:0] DIN;
+electrical CLKS;
+electrical [7:0] DIN;
+
+parameter real Vlo=0;
+parameter real Vhi=1;
+parameter real Vth = 0.5;
+parameter real tt = 50p from [1p:inf); //digital r/f time
+
+integer dacreg[7:0],counter;
+genvar i;
+analog begin
+
+ @(initial_step) begin
+        for(i = 0;i < 8 ; i=i+1)
+	begin
+	 dacreg[i] = 0;
+	end
+     counter = 0;
+    end
+ 
+    @(cross(V(CLKS)-Vth,1)) begin
+	 counter = counter + 1;
+	  if(counter>(pow(2,9)-1))
+       begin
+         counter = 0;
+       end
+     for(i = 0;i < 8 ; i=i+1)
+	begin
+	 dacreg[i] = 1 - counter>>(i)&1;
+    end
+      
+     end
+   
+for(i = 0;i < 8 ; i=i+1)
+	begin
+	  V(DIN[i])<+ transition(dacreg[i]?Vhi:Vlo,0,tt);
+	end
+end
+endmodule

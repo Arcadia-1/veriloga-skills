@@ -1,0 +1,57 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_ADC_BITS	4
+`default_transition 30p
+
+module L2_logic_4b_sync_ideal(input electrical CLKS, input electrical CLKC, input electrical DCMPP, input electrical DCMPN, 
+output electrical [`NUM_ADC_BITS-1:1] DCTRLN, output electrical [`NUM_ADC_BITS-1:1] DCTRLP, output electrical [`NUM_ADC_BITS-1:0] DO);
+
+parameter real vdd = 1;
+genvar i;
+
+real dctrlp[`NUM_ADC_BITS-1:1], dctrln[`NUM_ADC_BITS-1:1], dout[`NUM_ADC_BITS-1:0];
+integer step;
+
+analog begin
+	// reset at sampling phase
+	@ (initial_step or cross(V(CLKS)-vdd/2,+1)) begin
+		step = `NUM_ADC_BITS;
+		for(i = 1; i <= `NUM_ADC_BITS-1; i = i+1) begin
+			dctrlp[i] = 0; dctrln[i] = 0;
+		end
+		for(i = 0; i <= `NUM_ADC_BITS-1; i = i+1) begin
+			dout[i] = 0;
+		end
+	end
+
+	// count conversion step
+	@ (cross(V(CLKC)-vdd/2, +1)) begin
+		step = step - 1;
+	end
+
+	// DCMPP going high means Vresp > Vresn, then make Vresn higher
+	@ (cross(V(DCMPP)-vdd/2, +1)) begin
+		dout[step] = 1;
+		if (step > 0) begin
+			dctrln[step] = 1;
+		end
+	end
+
+	// vice versa
+	@ (cross(V(DCMPN)-vdd/2, +1)) begin
+		if (step > 0) begin
+			dctrlp[step] = 1;
+		end
+	end
+
+	// output voltage assignment
+	for(i = 1; i <= `NUM_ADC_BITS-1; i = i+1) begin
+		V(DCTRLP[i]) <+ transition(dctrlp[i] * vdd,0);
+		V(DCTRLN[i]) <+ transition(dctrln[i] * vdd,0);
+	end
+	for(i = 0; i <= `NUM_ADC_BITS-1; i = i+1) begin
+		V(DO[i]) <+ transition(dout[i] * vdd,0);
+	end
+end
+endmodule

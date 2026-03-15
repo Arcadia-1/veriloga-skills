@@ -1,0 +1,40 @@
+// VerilogA for PLL_TA, DIV, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module DIV(IN, N, OUT, VDD, GND);
+input IN,N;
+output OUT;
+inout VDD,GND;
+electrical IN,N,OUT,VDD,GND;
+//N=1,the divider is 17,N=0,the divider is 16
+parameter real amp=0.5;
+integer cnt,cnt1;
+real vcm,out1;
+
+analog begin
+	vcm=V(VDD,GND)/2;
+	cnt1=V(N,GND)+16;
+
+	@(initial_step) begin
+		cnt=0;
+		out1=-amp;
+	end
+
+	@(cross(V(IN,GND)-vcm,1))begin
+		cnt=cnt+1;
+		if(cnt==1) begin
+			out1=-out1;
+		end
+		if(cnt>=cnt1) begin
+			out1=-out1;
+			cnt=0;
+		end
+	end
+
+	V(OUT,GND) <+ vcm + transition(out1,1p,1p,1p);
+
+end
+
+endmodule

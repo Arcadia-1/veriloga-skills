@@ -1,0 +1,52 @@
+// Continuous-time comparator with propagation delay for OpenVAF demo.
+// Differential input (inp/inm), complementary output (outp/outm).
+// Delay modeled as first-order RC filter. No clock needed.
+// Compile: openvaf comparator.va
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module comparator(inp, inm, outp, outm, gnd);
+    inout inp, inm, outp, outm, gnd;
+    electrical inp, inm, outp, outm, gnd;
+
+    parameter real voh    = 1.8;       // output high voltage [V]
+    parameter real vol    = 0.0;       // output low voltage [V]
+    parameter real av     = 1000.0;    // voltage gain
+    parameter real vos    = 0.0;       // input offset voltage [V]
+    parameter real t_pd   = 100e-9;    // propagation delay [s]
+    parameter real r_in   = 1.0e12;    // input resistance [Ohm]
+
+    real v_diff, v_tgt_p, v_tgt_n, r_int, c_int;
+
+    analog begin
+        // High-impedance differential input
+        I(inp, inm) <+ V(inp, inm) / r_in;
+
+        // Ideal comparison with finite gain, offset, and clamping
+        v_diff = av * (V(inp, inm) + vos);
+
+        if (v_diff > voh)
+            v_tgt_p = voh;
+        else if (v_diff < vol)
+            v_tgt_p = vol;
+        else
+            v_tgt_p = v_diff;
+
+        // Complementary output
+        v_tgt_n = voh + vol - v_tgt_p;
+
+        // RC delay models propagation delay (tau = R*C = t_pd)
+        r_int = 1.0e3;
+        c_int = t_pd / r_int;
+
+        // Positive output with delay
+        I(outp, gnd) <+ (V(outp, gnd) - v_tgt_p) / r_int;
+        I(outp, gnd) <+ c_int * ddt(V(outp, gnd));
+
+        // Negative output with delay
+        I(outm, gnd) <+ (V(outm, gnd) - v_tgt_n) / r_int;
+        I(outm, gnd) <+ c_int * ddt(V(outm, gnd));
+    end
+
+endmodule

@@ -1,0 +1,54 @@
+// VerilogA for a single-ended ideal SAR ADC
+
+`define NUM_ADC_BITS 4
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module L1_sar_4b_behavioral(input electrical VIN, input electrical CLKS, output electrical [`NUM_ADC_BITS:1] DOUT);
+
+parameter real vdd = 1.0;
+parameter real vth = 0.5;
+
+real vsampled, vref;
+integer dout [`NUM_ADC_BITS:1];
+
+genvar i,step;
+
+analog begin
+
+	// reset digital output
+	@(initial_step or cross(V(CLKS)-vth,+1)) begin
+		$strobe("[reset]");
+		for (i = `NUM_ADC_BITS; i >= 1; i = i - 1) begin
+			dout[i] = 0;
+		end
+	end
+		
+	// track phase (sampling)
+	if (V(CLKS) > vth) begin
+		vsampled = V(VIN);
+	end
+
+	// conversion phase
+	@(cross(V(CLKS)-vth,-1)) begin
+		vref = vdd / 2;
+
+		// start successive approximation conversion (binary search)
+		for (step=1; step<=`NUM_ADC_BITS; step=step+1) begin
+			$strobe("[step=%d] vsampled = %0.4f, vref = %0.4f", step, vsampled, vref);
+			if (vsampled > vref) begin
+				dout[`NUM_ADC_BITS-step+1] = 1;
+				vref = vref + vdd/(pow(2.0,step+1	));
+			end else begin
+				dout[`NUM_ADC_BITS-step+1] = 0;
+				vref = vref - vdd/(pow(2.0,step+1));
+			end
+		end
+	end
+
+	for (i = `NUM_ADC_BITS; i >= 1 ; i = i - 1) begin
+		V(DOUT[i]) <+ transition(dout[i]);
+	end
+end		
+endmodule

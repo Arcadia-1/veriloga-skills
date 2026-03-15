@@ -1,0 +1,72 @@
+`include "discipline.h"
+`include "constants.h"
+
+// $Date: 1997/08/28 05:45:00 $
+// $Revision: 1.1 $
+//
+//
+// Based on the OVI Verilog-A Language Reference Manual, version 1.0 1996
+//
+//
+ 
+
+
+//--------------------
+// hard_current_clamp
+//
+// -  Hard current clamp
+//
+// vin:		input terminal  [V,A]
+// vout:	output terminal [V,A]
+// vgnd:	gnd terminal    [V,A]
+//
+// INSTANCE parameters
+//    iclamp_upper = upper clamping current [A]
+//    iclamp_lower = lower clamping current [A]
+//
+// MODEL parameters
+//    {none}
+//
+// Hard limits output current to between 'iclamp_upper' and 'iclamp_lower' of
+// the input current.
+//
+
+module hard_current_clamp(vin, vout, vgnd);
+input vin;
+output vout;
+inout vgnd;
+electrical vin, vout, vgnd;
+parameter real iclamp_upper = 1;
+parameter real iclamp_lower = -1;
+
+   real iin_val;
+   real iout_val;
+
+   analog begin
+
+       @ ( initial_step ) begin
+	 if (iclamp_upper <= iclamp_lower) begin
+	    $display("Range specification error.  iclamp_upper = (%E) less than iclamp_lower = (%E).\n", iclamp_upper, iclamp_lower );
+	    $finish;
+	 end
+      end
+
+`ifdef __VAMS_ENABLE__
+      iin_val = I(<vin>);
+`else
+       iin_val = I(vin,vin);
+`endif
+
+      if (iin_val > iclamp_upper)      begin	
+      	 iout_val = iclamp_upper;
+      end else if (iin_val < iclamp_lower) begin
+      	 iout_val = iclamp_lower;
+      end else begin
+         iout_val = iin_val;
+      end
+
+      I(vin,vgnd) <+ iin_val - iout_val;
+      V(vin,vout) <+ 0;
+   end
+endmodule
+

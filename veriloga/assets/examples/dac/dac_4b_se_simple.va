@@ -1,0 +1,26 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_ADC_BITS	4
+
+module _va_dac_4b_se(input electrical [`NUM_ADC_BITS:1] DIN, input electrical RDY, output electrical AOUT);
+
+parameter real vdd = 1; 
+parameter real vth = 0.5;
+
+real aout;
+genvar step;
+
+analog begin
+	@(cross(V(RDY)-vth,+1)) begin
+		aout = 0;
+		for(step=1; step<=`NUM_ADC_BITS;step=step+1) begin
+			aout = aout + (V(DIN[`NUM_ADC_BITS-step+1]) > vth) * 1/(pow(2,step));
+		end
+		aout = aout*vdd;
+	end
+	V(AOUT) <+ transition(aout);
+end
+
+endmodule
+

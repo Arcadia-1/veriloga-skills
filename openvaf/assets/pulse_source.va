@@ -1,0 +1,37 @@
+// Periodic pulse/clock source for OpenVAF demo.
+// Outputs a periodic pulse with configurable rise/fall times and duty cycle.
+// Compile: openvaf pulse_source.va
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module pulse_source(p, n);
+    inout p, n;
+    electrical p, n;
+
+    parameter real v_lo   = 0.0;       // low voltage [V]
+    parameter real v_hi   = 1.8;       // high voltage [V]
+    parameter real period = 2e-6;      // period [s]
+    parameter real duty   = 0.5;       // duty cycle (0 to 1)
+    parameter real t_rise = 20e-9;     // rise time [s]
+    parameter real t_fall = 20e-9;     // fall time [s]
+
+    real phase, t_on, v_out;
+
+    analog begin
+        t_on  = period * duty;
+        phase = $abstime - floor($abstime / period) * period;
+
+        if (phase < t_rise)
+            v_out = v_lo + (v_hi - v_lo) * phase / t_rise;
+        else if (phase < t_on)
+            v_out = v_hi;
+        else if (phase < t_on + t_fall)
+            v_out = v_hi - (v_hi - v_lo) * (phase - t_on) / t_fall;
+        else
+            v_out = v_lo;
+
+        V(p, n) <+ v_out;
+    end
+
+endmodule

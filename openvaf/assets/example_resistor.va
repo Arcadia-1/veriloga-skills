@@ -1,0 +1,16 @@
+// Simple two-terminal resistor for OpenVAF compilation demo.
+// Compile: openvaf myresistor.va → produces myresistor.osdi
+
+`include "disciplines.vams"
+
+module myresistor(p, n);
+    inout p, n;
+    electrical p, n;
+
+    parameter real r = 1000.0 from (0:inf);
+
+    analog begin
+        I(p, n) <+ V(p, n) / r;
+    end
+
+endmodule

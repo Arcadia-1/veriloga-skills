@@ -1,0 +1,30 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 30p
+
+module L2_comparator_ideal(input electrical CMPCK, input electrical VINN, input electrical VINP, output electrical DCMPN, output electrical DCMPP);
+
+parameter real vdd = 1, td_cmp = 100.0p ; // comparator delay
+real xoutp, xoutn;
+
+analog begin
+
+	// fire comparator when CMPCK goes up
+	@(cross(V(CMPCK)-vdd/2,+1)) begin
+		xoutp = (V(VINP) > V(VINN));
+		xoutn = (V(VINP) < V(VINN));
+	end
+	
+	// reset comparator output when CMPCK goes down
+	@(cross(V(CMPCK)-vdd/2,-1)) begin
+		xoutp = 0;
+		xoutn = 0;
+	end
+
+	V(DCMPP) <+ transition(xoutp * vdd, td_cmp);
+	V(DCMPN) <+ transition(xoutn * vdd, td_cmp);
+end
+
+endmodule
+

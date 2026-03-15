@@ -1,0 +1,60 @@
+// Verilog-A Module Template
+// Replace placeholders (ALL_CAPS) with your design specifics.
+// Delete comments you don't need — they're just guides.
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+// Domain: <voltage|current>  (auto-classified after code is written)
+
+module MODULE_NAME (VDD, VSS, /* add ports here */);
+
+    // ── Power ──────────────────────────────────────────────
+    inout electrical VDD, VSS;
+
+    // ── Signal Ports ───────────────────────────────────────
+    // input  electrical clk_i;
+    // input  electrical [7:0] data_i;      // bus example
+    // output electrical out_o;
+
+    // ── Parameters ─────────────────────────────────────────
+    // parameter real    vth    = 0.5;       // decision threshold [V]
+    // parameter real    trise  = 10e-12;    // output rise time [s]
+    // parameter real    tfall  = 10e-12;    // output fall time [s]
+    // parameter integer nbits  = 8;         // bit width
+
+    // ── Variables (all declared here, before analog begin) ─
+    real vh, vl;                             // actual supply voltages
+    // real    in_val;
+    // integer state;
+    // genvar  i;
+
+    analog begin
+
+        // 1. Read supply voltages
+        vh = V(VDD);
+        vl = V(VSS);
+
+        // 2. Initialize state variables
+        // @(initial_step) begin
+        //     state = 0;
+        // end
+
+        // 3. Read inputs
+        // in_val = V(in_i);
+        // or for digital: in_val = (V(in_i) > (vh + vl) / 2.0) ? 1 : 0;
+
+        // 4. Edge detection (if needed)
+        // @(cross(V(clk_i) - (vh + vl) / 2.0, +1)) begin
+        //     // rising edge logic
+        // end
+
+        // 5. Core logic
+        // (state machines, arithmetic, comparisons, etc.)
+
+        // 6. Drive outputs
+        // V(out_o) <+ transition(state ? vh : vl, trise, tfall);
+
+    end
+
+endmodule

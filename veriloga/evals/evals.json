@@ -1,0 +1,239 @@
+{
+  "skill_name": "veriloga",
+  "evals": [
+    {
+      "id": 1,
+      "name": "eval-sar-logic",
+      "category": "ADC/SAR",
+      "domain": "voltage",
+      "prompt": "Write a Verilog-A 10-bit SAR ADC logic block. It should take a comparator output (DCOMP) and a sample clock (CLKS), and generate 10 DAC control bits (DP_DAC[9:0]) plus a ready flag (RDY). Use rising edge of an internal bit-clock derived from CLKS. Include VDD and VSS as power ports.",
+      "expected_output": "A complete .va file with proper port declarations, genvar loops, @(initial_step), cross() events for clock edges, bit-cycling state machine, and transition() outputs using supply voltages.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "eval-vco",
+      "category": "PLL/Clock",
+      "domain": "current",
+      "prompt": "I need a behavioral VCO for a PLL. Specs: 2 GHz center frequency, 200 MHz/V gain (Kvco), sinusoidal output, differential (OUTP/OUTN). Control voltage input is VCTR. Include phase noise via flicker_noise. Make sure the simulator doesn't skip cycles.",
+      "expected_output": "A .va file using idtmod() for phase accumulation, $bound_step() for time-step control, sin() output with differential pair, flicker_noise() call, and proper VDD/VSS power ports.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "eval-opamp",
+      "category": "Amplifier/Filter",
+      "domain": "current",
+      "prompt": "Create an ideal opamp behavioral model in Verilog-A. Requirements: 80dB DC gain, 10MHz GBW, 1V/us slew rate, differential input (INP/INM), single-ended output (VOUT), rail-to-rail output clamping to VDD/VSS. Should model input resistance and output resistance.",
+      "expected_output": "A .va file with current-based modeling (I() <+), ddt() for dominant pole, slew-rate limiting via current clamp, output clamping to supply rails, computed internal parameters from specs in @(initial_step).",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "eval-sar-12bit",
+      "category": "ADC/SAR",
+      "domain": "voltage",
+      "prompt": "Write a 12-bit SAR ADC logic block with differential input, comparator interface, and CDAC control outputs. Include end-of-conversion flag.",
+      "expected_output": "A .va file with 12-bit SAR state machine, differential comparator interface, CDAC control bus, EOC flag, all 8 mandatory rules followed.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "eval-pipeline-stage",
+      "category": "ADC/SAR",
+      "domain": "voltage",
+      "prompt": "Create a 1.5-bit pipeline ADC stage (MDAC) in Verilog-A. It should sample the input, compare against ±Vref/4 thresholds, compute the residue with gain-of-2, and output a 2-bit sub-ADC code.",
+      "expected_output": "A .va file modeling MDAC with two comparators, residue amplifier with gain-of-2, 2-bit thermometer output, sample-hold on clock phase.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "eval-segmented-dac",
+      "category": "DAC",
+      "domain": "voltage",
+      "prompt": "I need a 14-bit DAC with 6-bit thermometer MSBs and 8-bit binary LSBs. Differential current-steering output. Include INL/DNL-friendly unary decoding for the MSBs.",
+      "expected_output": "A .va file with segmented architecture, 63 unary MSB elements, 256-level binary LSB, differential output around vcm.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "eval-cdac-cal",
+      "category": "DAC",
+      "domain": "voltage",
+      "prompt": "Write a 10-bit capacitive DAC for a SAR ADC. Binary-weighted main array plus 2 redundant calibration capacitors. Differential topology (top-plate/bottom-plate). Model charge redistribution.",
+      "expected_output": "A .va file with capacitor weight array, charge redistribution math, calibration cap switching, differential top/bottom plate outputs.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "eval-multimod-divider",
+      "category": "PLL/Clock",
+      "domain": "voltage",
+      "prompt": "Create a Verilog-A multi-modulus divider that can divide by N or N+1, controlled by a MOD input. Include prescaler output and a 4-bit modulus control word.",
+      "expected_output": "A .va file with counter-based divider, MOD-controlled modulus switching, prescaler output, digital bus input for ratio.",
+      "files": []
+    },
+    {
+      "id": 9,
+      "name": "eval-bbpd",
+      "category": "PLL/Clock",
+      "domain": "voltage",
+      "prompt": "Write a bang-bang (binary) phase-frequency detector for a CDR. Three inputs: DATA, CLK, and RETIMED_DATA. Outputs: UP and DOWN pulses. Edge-triggered on DATA transitions.",
+      "expected_output": "A .va file with Alexander-type BBPD, cross() on DATA edges, early/late detection, UP/DOWN pulse generation.",
+      "files": []
+    },
+    {
+      "id": 10,
+      "name": "eval-charge-pump",
+      "category": "PLL/Clock",
+      "domain": "current",
+      "prompt": "I need an ideal charge pump with configurable current mismatch. Parameters: Iup, Idown (separately settable), switching delay, and a leakage current parameter. Tri-state output when both UP and DOWN are low.",
+      "expected_output": "A .va file with separate Iup/Idown current sources, tri-state when idle, leakage path, transition() on current switching.",
+      "files": []
+    },
+    {
+      "id": 11,
+      "name": "eval-two-stage-opamp",
+      "category": "Amplifier/Filter",
+      "domain": "current",
+      "prompt": "Model a two-stage opamp: first stage is a transconductor (gm1), second stage is a common-source (gm2) with Miller compensation capacitor Cc. Include both poles, the RHP zero, and output swing limiting.",
+      "expected_output": "A .va file with two internal nodes, gm1/gm2 stages, Miller cap (Cc) feedback, RHP zero via nulling resistor or feed-forward, output clamping.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "eval-sc-integrator",
+      "category": "Amplifier/Filter",
+      "domain": "voltage",
+      "prompt": "Write a Verilog-A non-overlapping two-phase switched-cap integrator. Inputs: VIN, PHI1, PHI2. Output: VOUT. Parameters: Cin and Cfb capacitor values. Model the sample-then-integrate behavior.",
+      "expected_output": "A .va file with two-phase clock cross() events, charge transfer math (Cin*Vin/Cfb), held output between phases.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "eval-butterworth-lpf",
+      "category": "Amplifier/Filter",
+      "domain": "current",
+      "prompt": "Create a 4th-order Butterworth low-pass filter using cascaded laplace_nd() biquad sections. Parameterize the cutoff frequency. Single input, single output.",
+      "expected_output": "A .va file with two cascaded laplace_nd() calls using Butterworth polynomial coefficients, parameterized fc.",
+      "files": []
+    },
+    {
+      "id": 14,
+      "name": "eval-therm2bin",
+      "category": "Digital Logic",
+      "domain": "voltage",
+      "prompt": "Write a Verilog-A thermometer-to-binary encoder. 15-bit thermometer input, 4-bit binary output. Handle bubble errors (non-monotonic thermometer codes) gracefully.",
+      "expected_output": "A .va file that counts '1' bits in thermometer code, converts to binary, handles bubble errors via majority or summation.",
+      "files": []
+    },
+    {
+      "id": 15,
+      "name": "eval-prbs7",
+      "category": "Digital Logic",
+      "domain": "voltage",
+      "prompt": "Create a 7-bit pseudo-random bit sequence (PRBS-7) generator in Verilog-A. Clock-driven, with a serial output and a parallel 7-bit state bus output. Use LFSR with XOR feedback taps at positions 7 and 6.",
+      "expected_output": "A .va file with 7-bit LFSR shift register, XOR feedback, serial and parallel outputs, clock-edge-driven.",
+      "files": []
+    },
+    {
+      "id": 16,
+      "name": "eval-clk-divider",
+      "category": "Digital Logic",
+      "domain": "voltage",
+      "prompt": "Write a programmable clock divider. 8-bit division ratio (1-255). 50% output duty cycle regardless of division ratio. Synchronous reset. Include a LOCK output that goes high after the first full output period.",
+      "expected_output": "A .va file with programmable counter, toggle logic for 50% duty, sync reset, LOCK flag after first complete cycle.",
+      "files": []
+    },
+    {
+      "id": 17,
+      "name": "eval-multitone",
+      "category": "Signal Source",
+      "domain": "voltage",
+      "prompt": "Create a signal source that outputs the sum of N sinusoids. Parameters: an array of frequencies and amplitudes (up to 8 tones). Include $bound_step for the highest frequency component.",
+      "expected_output": "A .va file with frequency/amplitude parameter arrays, summation loop, $bound_step tied to max frequency, $abstime-based generation.",
+      "files": []
+    },
+    {
+      "id": 18,
+      "name": "eval-nrz-prbs",
+      "category": "Signal Source",
+      "domain": "voltage",
+      "prompt": "Write a Verilog-A NRZ data generator for SerDes testing. PRBS-15 pattern, configurable data rate (default 10 Gbps), output amplitude, and pre-emphasis (1-tap FIR). Differential output.",
+      "expected_output": "A .va file with 15-bit LFSR, data-rate clock via $abstime or timer, FIR pre-emphasis (main + post cursor), differential output.",
+      "files": []
+    },
+    {
+      "id": 19,
+      "name": "eval-varactor",
+      "category": "Passive/Model",
+      "domain": "current",
+      "prompt": "Model a MOS varactor in Verilog-A. C(V) characteristic: C = Cmin + (Cmax-Cmin)/2 * (1 + tanh((V-V0)/Vslope)). Two terminals. Include quality factor via series resistance.",
+      "expected_output": "A .va file with voltage-dependent capacitance via tanh(), I() <+ ddt(C(V)*V), series resistance for Q factor.",
+      "files": []
+    },
+    {
+      "id": 20,
+      "name": "eval-ldo",
+      "category": "Power/Switch",
+      "domain": "current",
+      "prompt": "Create a behavioral low-dropout regulator. Input: VIN (unregulated). Output: VOUT (regulated). Parameters: target voltage, dropout voltage, PSRR (as a 1st-order HPF), output impedance, current limit. Clamp output to VIN-Vdropout when input is too low.",
+      "expected_output": "A .va file with regulation loop, dropout clamping, PSRR via laplace or ddt filter, output impedance, current limiting.",
+      "files": []
+    },
+    {
+      "id": 21,
+      "name": "eval-bg-cal",
+      "category": "Calibration",
+      "domain": "voltage",
+      "prompt": "Write a background calibration module that measures comparator offset via a chopping technique. Inputs: COMP_OUT, CLK. Output: 6-bit trim code (TRIM[5:0]). It should average N comparisons, compute the offset direction, and adjust the trim code by ±1 LSB each calibration cycle. Include a SETTLED output flag when trim code stops changing for 8 consecutive cycles.",
+      "expected_output": "A .va file with accumulator-based averaging, chopping logic, ±1 step adjustment, settled counter, digital bus output with transition().",
+      "files": []
+    },
+    {
+      "id": 22,
+      "name": "eval-mosfet-sq",
+      "category": "Passive/Model",
+      "domain": "current",
+      "prompt": "Write a simple square-law MOSFET model: 4 terminals (D,G,S,B). Model linear and saturation regions with body effect. Parameters: Kp, Vth0, lambda, gamma, phi. Include subthreshold region with exponential rolloff.",
+      "expected_output": "A .va file with 4-terminal MOSFET, region-based I-V (cutoff/linear/saturation), body effect via gamma, subthreshold exponential.",
+      "files": []
+    },
+    {
+      "id": 23,
+      "name": "eval-inl-dnl-probe",
+      "category": "Testbench",
+      "domain": "voltage",
+      "prompt": "Create a testbench probe that monitors a DAC output and computes code-by-code INL and DNL. Input: analog DAC output + clock strobe. Output: writes results to a file using $fopen/$fdisplay at end of simulation.",
+      "expected_output": "A .va file with code-stepping on strobe, voltage capture array, DNL/INL computation at final_step, file I/O output.",
+      "files": []
+    },
+    {
+      "id": 24,
+      "name": "eval-mixed-charge-pump-pfd",
+      "category": "PLL/Clock",
+      "domain": "mixed",
+      "prompt": "Write a single Verilog-A module that combines a phase-frequency detector (PFD) and charge pump. The PFD uses @(cross()) for edge detection on REF and FB clocks, generating UP/DOWN signals. The charge pump uses I(OUT) <+ to inject/sink current based on UP/DOWN state. Include dead-zone prevention and current mismatch parameters.",
+      "expected_output": "The module should be REJECTED as mixed-domain. It combines @(cross()) (voltage-domain) with I() <+ (current-domain). The correct approach is to split into two modules: a voltage-domain PFD and a current-domain charge pump core.",
+      "files": []
+    },
+    {
+      "id": 25,
+      "name": "eval-mixed-ldo-digital-control",
+      "category": "Power/Switch",
+      "domain": "mixed",
+      "prompt": "Create a single Verilog-A LDO module with an integrated digital controller. The digital controller uses @(cross()) to detect when VOUT drops below target, a counter-based FSM with transition() outputs for trim code adjustment, and the analog regulator section uses I(VOUT) <+ for the pass device current and laplace_nd() for the control loop.",
+      "expected_output": "The module should be REJECTED as mixed-domain. It combines @(cross())/transition() (voltage-domain) with I() <+/laplace_nd() (current-domain). The correct approach is to split into a voltage-domain digital controller and a current-domain analog regulator.",
+      "files": []
+    },
+    {
+      "id": 26,
+      "name": "eval-mixed-sar-with-cdac-current",
+      "category": "ADC/SAR",
+      "domain": "mixed",
+      "prompt": "Write a single Verilog-A module for a complete SAR ADC that includes the SAR logic (using @(cross()) for clock edges, genvar for bit loops, transition() for DAC control outputs) and an embedded CDAC that models charge redistribution using I(top_plate) <+ ddt(C * V(top_plate, bot_plate)).",
+      "expected_output": "The module should be REJECTED as mixed-domain. It combines @(cross())/transition()/genvar (voltage-domain) with I() <+/ddt() (current-domain). The correct approach is to split into a voltage-domain SAR logic module and a current-domain CDAC module.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "skill_name": "openvaf",
+  "evals": [
+    {
+      "id": 1,
+      "name": "eval-install-check",
+      "category": "Setup",
+      "prompt": "I want to compile a Verilog-A file with OpenVAF but I'm not sure if I have it installed. Help me check and install it if needed. I'm on Windows.",
+      "expected_output": "Step-by-step instructions: check PATH, download from openvaf.semimod.de, rename to .exe, install MSVC Build Tools, verify with openvaf --help.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "eval-simple-resistor",
+      "category": "Compile+Simulate",
+      "prompt": "Write a simple nonlinear resistor model in Verilog-A (resistance depends on temperature: R = R0*(1 + tc1*(T-Tnom))). Then compile it with OpenVAF and create an ngspice netlist to test it with a DC sweep.",
+      "expected_output": "A .va file with temperature-dependent resistor, openvaf compile command, ngspice netlist with pre_osdi, N-prefixed instance, .model card, DC sweep.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "eval-diode-model",
+      "category": "Compile+Simulate",
+      "prompt": "Create a simple exponential diode model in Verilog-A with parameters Is and N. Compile with OpenVAF and simulate forward I-V curve in ngspice from 0 to 0.8V.",
+      "expected_output": "A .va file with I=Is*(exp(V/(N*Vt))-1), limexp for convergence, openvaf command, ngspice netlist with proper OSDI loading, DC sweep plot.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "eval-mosfet-iv",
+      "category": "Compile+Simulate",
+      "prompt": "I have a square-law MOSFET .va file. Show me how to compile it and generate Id-Vds family curves in ngspice with Vgs stepping from 0.5V to 2V.",
+      "expected_output": "openvaf compile command, ngspice netlist with nested DC sweep (Vds outer, Vgs inner), pre_osdi loading, N-prefix instance, plot command.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "eval-debug-no-N-prefix",
+      "category": "Troubleshooting",
+      "prompt": "My OSDI model loads fine but the device seems to be ignored - no current flows. Here's my netlist:\n\n.control\npre_osdi ./myresistor.osdi\ndc V1 0 5 0.1\nplot -i(V1)\n.endc\n\nV1 in 0 DC 1\n.model r1k myresistor r=1000\nR1 in 0 r1k\n\n.end\n\nWhat's wrong?",
+      "expected_output": "Identify that R1 should be Nr1 — OSDI instances must start with N. Without it, ngspice treats R1 as a built-in resistor and ignores the OSDI model.",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "eval-behavioral-reject",
+      "category": "Scope",
+      "prompt": "I wrote a VCO in Verilog-A that uses @(cross()) and idtmod(). Can I compile it with OpenVAF and simulate in ngspice?",
+      "expected_output": "Explain that OpenVAF does NOT support @(cross()) — it only handles the compact-model subset. VCOs are behavioral models and need a full Verilog-AMS simulator. Suggest alternatives.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "eval-varactor-charge",
+      "category": "Compile+Simulate",
+      "prompt": "Write a MOS varactor model with C(V) = Cmin + (Cmax-Cmin)/2 * (1+tanh((V-V0)/Vs)). Use charge-based formulation. Compile with OpenVAF and set up an AC simulation in ngspice.",
+      "expected_output": "A .va file with ddt(Q) contribution, series R for Q-factor, openvaf command, ngspice AC sweep netlist.",
+      "files": []
+    },
+    {
+      "id": 8,
+      "name": "eval-full-workflow",
+      "category": "Compile+Simulate",
+      "prompt": "Walk me through the complete workflow from scratch: I want to model a voltage-controlled current source (VCCS) in Verilog-A with gain parameter gm, compile it, and verify it works in ngspice with a transient simulation.",
+      "expected_output": "Complete .va source, openvaf compile, ngspice netlist with sin source driving control voltage, pre_osdi, N-prefix instance, transient analysis, plot of output current.",
+      "files": []
+    }
+  ]
+}

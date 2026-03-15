@@ -1,0 +1,69 @@
+// VerilogA for VA_model, DATA_GEN, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module data_gen(VDD, GND, VIN, CLK, DOUT_MSB[62: 0], DOUT_LSB[13: 0]);
+
+inout VDD;
+electrical VDD;
+inout GND;
+electrical GND;
+input VIN;
+electrical VIN;
+input CLK;
+electrical CLK;
+output DOUT_MSB[62: 0];
+electrical DOUT_MSB[62: 0];
+output DOUT_LSB[13: 0];
+electrical DOUT_LSB[13 :0];
+
+parameter real n_msb = 6;
+parameter real n_lsb = 14;
+
+real vh, vl, vtrans, vref, vres;
+real dout_msb[62: 0], dout_lsb[13: 0];
+real d_msb;
+
+genvar k;
+
+analog begin
+	@(initial_step) begin
+		vh = V(VDD);
+		vl = V(GND);
+		vtrans = 0.5* (V(VDD) - V(GND));
+		vref = V(VDD) - V(GND);
+	end
+
+	@(cross(V(CLK) - vtrans, 1)) begin
+		vres = V(VIN);
+		d_msb = $floor((vres+vref) / (2*vref/(2**n_msb)));
+		vres = vres - d_msb * vref / (2**n_msb) + ((2**n_msb-1) - d_msb) * vref / (2**n_msb);
+		for(k=0; k<(2**n_msb-1); k=k+1) begin
+			if(k<d_msb) 
+				dout_msb[k] = 1;
+			else
+				dout_msb[k] = 0;
+		end
+
+		for(k=n_lsb-1; k>-1; k=k-1) begin
+			if(vres > 0) begin
+				dout_lsb[k] = 1;
+				vres = vres - vref*(2**k)/(2**(n_msb+n_lsb));
+			end
+			else begin
+				dout_lsb[k] = 0;
+				vres = vres + vref*(2**k)/(2**(n_msb+n_lsb));
+			end
+		end
+	end
+
+	for(k=0; k<(2**n_msb-1); k=k+1)
+		V(DOUT_MSB[k]) <+ transition(dout_msb[k] ? vh : vl , 0, 20p);
+
+	for(k=n_lsb-1; k>-1; k=k-1)
+		V(DOUT_LSB[k]) <+ transition(dout_lsb[k] ? vh : vl , 0, 20p);
+
+end
+
+endmodule

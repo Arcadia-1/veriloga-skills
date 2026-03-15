@@ -1,0 +1,46 @@
+`include "discipline.h"
+`include "constants.h"
+
+ 
+ 
+
+
+
+
+//--------------------
+// diffamp
+//
+// -  differential amplifier (aka opamp)
+//
+// sigin_p,sigin_n:	(val,flow)
+// sigout:		(val,flow)
+//
+// INSTANCE parameters
+//    gain          = amplifier differential gain (val)
+//    sigin_offset  = input offset (val)
+//
+// MODEL parameters
+//    {none}
+//
+// 'sig_out' is 'gain' times the adjusted input differential signal.
+// The adjusted input differential signal is the differential input
+// minus 'sigin_offset'
+//
+
+module diffamp(sigin_p, sigin_n, sigout);
+input sigin_p, sigin_n;
+output sigout;
+electrical sigin_p, sigin_n, sigout;
+parameter real gain = 1;
+parameter real sigin_offset = 0;
+
+   analog
+      V(sigout) <+ (V(sigin_p, sigin_n) - sigin_offset) * gain;
+
+endmodule
+
+
+
+
+
+

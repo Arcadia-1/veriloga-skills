@@ -1,0 +1,24 @@
+// VerilogA for solutions, samplehold, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module samplehold(control, in, out);
+inout control;
+electrical control;
+inout in;
+electrical in;
+inout out;
+electrical out;
+parameter real thresh = 2.5 ;
+
+real hold;
+
+analog begin
+
+ @ (cross(V(control) - thresh,+ 1)) hold=V(in);
+ V(out) <+ transition(hold,1n,1n);
+
+end
+
+endmodule

@@ -1,0 +1,52 @@
+// Square-law MOSFET for OpenVAF compilation demo.
+// 3 regions: cutoff, linear, saturation. Body effect included.
+// Compile: openvaf nmos_sq.va → produces nmos_sq.osdi
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module nmos_sq(d, g, s, b);
+    inout d, g, s, b;
+    electrical d, g, s, b;
+
+    parameter real Kp    = 200e-6  from (0:inf);   // transconductance parameter [A/V^2]
+    parameter real Vth0  = 0.5     from (0:inf);   // threshold voltage [V]
+    parameter real lambda = 0.02   from [0:inf);   // channel-length modulation [1/V]
+    parameter real gamma = 0.4     from [0:inf);   // body-effect coefficient [V^0.5]
+    parameter real phi   = 0.6     from (0:inf);   // surface potential [V]
+    parameter real W     = 1e-6   from (0:inf);    // channel width [m]
+    parameter real L     = 1e-6   from (0:inf);    // channel length [m]
+
+    real Vgs, Vds, Vsb, Vth, Id, beta;
+
+    analog begin
+        Vgs = V(g, s);
+        Vds = V(d, s);
+        Vsb = V(s, b);
+
+        // Threshold with body effect
+        if (Vsb > 0)
+            Vth = Vth0 + gamma * (sqrt(phi + Vsb) - sqrt(phi));
+        else
+            Vth = Vth0;
+
+        beta = Kp * W / L;
+
+        // Region-based current
+        if (Vgs < Vth) begin
+            // Cutoff (subthreshold leakage)
+            Id = 1e-12;
+        end else if (Vds < (Vgs - Vth)) begin
+            // Linear region
+            Id = beta * ((Vgs - Vth) * Vds - 0.5 * Vds * Vds) * (1.0 + lambda * Vds);
+        end else begin
+            // Saturation region
+            Id = 0.5 * beta * (Vgs - Vth) * (Vgs - Vth) * (1.0 + lambda * Vds);
+        end
+
+        I(d, s) <+ Id;
+        I(g, s) <+ 0;   // ideal gate — no leakage
+        I(b, s) <+ 0;   // ideal bulk
+    end
+
+endmodule
