@@ -234,6 +234,29 @@ Mistakes that compile but produce wrong simulation results — the worst kind of
 
 ---
 
+## Useful Syntax
+
+### Differential voltage: `V(A, B)`
+
+Use `V(A, B)` to read the voltage difference between two nodes. This is cleaner than
+writing `V(A) - V(B)` and is standard Verilog-A syntax:
+```
+// Read differential input
+real vdiff;
+vdiff = V(VINP, VINN);           // equivalent to V(VINP) - V(VINN)
+
+// Comparator decision on differential pair
+Dp = V(VINP, VINN) > VOS;        // compare against offset voltage
+
+// Drive differential output referenced to supply
+V(DCMPP) <+ transition(Dp ? V(VDD) : V(GND), td, tr);
+V(DCMPN) <+ transition(Dp ? V(GND) : V(VDD), td, tr);
+```
+
+Common use cases: comparators, opamps, differential amplifiers, DAC differential outputs.
+
+---
+
 ## Domain Classification
 
 After writing the module code, scan the `analog begin` block to classify the module's domain.

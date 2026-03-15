@@ -1,0 +1,51 @@
+// comp_fire_reset.va — Clocked comparator with fire/reset
+// CLK rising edge: compare VINP vs VINN (with offset VOS)
+// CLK falling edge: reset both outputs to VDD
+// Domain: voltage
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module comp_fire_reset (VINP, VINN, DCMPP, DCMPN, VDD, GND, CLK);
+
+parameter real VOS = 0;
+parameter real tr = 20p from (0:inf);
+parameter real td = 50p from (0:inf);
+
+input VINP, VINN, CLK;
+output DCMPP, DCMPN;
+inout VDD, GND;
+electrical VINP, VINN, DCMPP, DCMPN, VDD, GND, CLK;
+
+real vh, vl, vth;
+real Dp, Dn;
+
+analog begin
+
+    vh = V(VDD);
+    vl = V(GND);
+    vth = (vh + vl) / 2.0;
+
+    @(initial_step) begin
+        Dp = 1;
+        Dn = 1;
+    end
+
+    // Fire: compare on CLK rising edge
+    @(cross(V(CLK) - vth, +1)) begin
+        Dp = V(VINP, VINN) > VOS;
+        Dn = V(VINP, VINN) < VOS;
+    end
+
+    // Reset: both high on CLK falling edge
+    @(cross(V(CLK) - vth, -1)) begin
+        Dp = 1;
+        Dn = 1;
+    end
+
+    V(DCMPP) <+ transition(Dp ? vh : vl, td, tr);
+    V(DCMPN) <+ transition(Dn ? vh : vl, td, tr);
+
+end
+
+endmodule
