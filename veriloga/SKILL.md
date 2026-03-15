@@ -255,6 +255,71 @@ V(DCMPN) <+ transition(Dp ? V(GND) : V(VDD), td, tr);
 
 Common use cases: comparators, opamps, differential amplifiers, DAC differential outputs.
 
+### String parameters for configuration
+
+Use `string` parameters to pass configuration bit patterns (e.g., trim codes, enable masks)
+as a string literal. Parse with `.len()` and `.substr()`:
+```
+parameter conf = "10110";           // configuration string
+parameter n_conf = 5;
+
+integer conf_list[4:0];
+genvar i;
+
+@(initial_step) begin
+    for (i = 0; i < n_conf; i = i + 1)
+        conf_list[i] = (conf.substr(i, i) == "1");
+end
+```
+
+Common use cases: SPI trim registers, programmable enable masks, ROM initialization.
+
+### `@(above())` threshold event
+
+`@(above(expr))` triggers when `expr` crosses zero from below (rising threshold).
+Unlike `@(cross())`, it also fires if the condition is already true at `initial_step`:
+```
+@(above(V(RST) - vth)) begin
+    // Fires when RST goes above vth, and also at t=0 if RST > vth
+    state = 0;
+end
+```
+
+Use `@(above())` when you need level-sensitive behavior at startup. Use `@(cross())` when
+you only care about transitions during simulation.
+
+### Internal voltage nodes
+
+Declare internal nodes with `voltage` (or `electrical`) to create intermediate signals
+that are not module ports. Useful for multi-stage logic with `transition()` shaping:
+```
+voltage [15:0] shadow;              // internal node bus, not a port
+
+// Stage 1: slow transition for timing control
+V(shadow[i]) <+ transition(active ? 1 : 0, 0, 100p, 1p);
+
+// Stage 2: re-threshold and drive output with fast edges
+V(OUT[i]) <+ transition((V(shadow[i]) > 0.5) ? vh : vl, 0, tr, tr);
+```
+
+Common use cases: frame generators, non-overlapping clock generators, glitch-free muxing.
+
+### `transition()` as intermediate variable
+
+`transition()` can be assigned to a `real` variable for use in downstream logic,
+not just in `V() <+` contributions:
+```
+real clk_delayed;
+
+// Create a smoothed/delayed version of a combinational signal
+clk_delayed = transition(((V(RST) < vth) && (V(CLK) > vth)) ? 1 : 0, 200p, 1p, 1p);
+
+// Use it in downstream logic
+V(CLKOUT) <+ transition((clk_delayed > 0.5) ? vh : vl, 0, tr, tr);
+```
+
+Common use cases: non-overlapping clock generation, pulse-width extension, gated clocks.
+
 ---
 
 ## Domain Classification
