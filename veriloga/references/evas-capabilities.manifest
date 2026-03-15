@@ -9,20 +9,48 @@
 # 3. This file (fallback)
 #
 # If fetched successfully, overwrite this file with the latest version.
+# last_synced: 2026-03-15
 
 [supported]
-V() <+
+# --- Contributions ---
+V(node) <+
+V(node1, node2) <+
+# --- Events ---
 @(cross())
-transition()
+@(above())
 @(initial_step)
+# combined: @(event1 or event2)
+# --- Operators ---
+transition()
+`default_transition
+# --- Variables & Parameters ---
+parameter (real, integer, string)
+real
+integer
 genvar
 arrays
+string .substr()
+# --- Control flow ---
+if/else
+for
+begin/end
+case/endcase
+# --- System functions ---
 $abstime
 $bound_step()
-$fopen
-$fdisplay
-$fclose
+$display
 $strobe
+$random
+$dist_uniform()
+$rdist_normal()
+# --- Math ---
+abs() sqrt() ln() log() exp() pow()
+sin() cos() floor() ceil() min() max()
+# --- Preprocessor ---
+`include
+`define
+# --- Other ---
+from [a:b] (parameter ranges)
 
 [unsupported]
 # These are PERMANENT architectural exclusions — EVAS is event-driven,
@@ -38,9 +66,12 @@ white_noise()
 $temperature
 $vt
 KCL-based solving
-
-# --- Status ---
-# evas_repo: https://evas.tokenzhang.com/
-# evas_status: in-development (CLI not yet stable)
-# last_synced: 2026-03-15
-# last_synced_commit: (fill in EVAS commit hash after sync)
+@(timer())
+@(final_step)
+$fopen / $fclose / $fstrobe
+last_crossing()
+analysis()
+branch
+nature / discipline (custom)
+slew()
+limexp()
