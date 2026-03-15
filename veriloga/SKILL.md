@@ -32,6 +32,13 @@ from 1,638 real-world .va files across 10+ circuit domains, plus battle-tested c
    to the appropriate simulation path (see Simulation Routing below)
 8. **Verify (optional)** — when the user asks to confirm the module works, run a smoke test
    on the appropriate simulator (see Smoke Test below)
+9. **Explain usage** — after generating the module, tell the user how to use it: list every
+   port with its direction, what signal to connect, and any key parameters. Example:
+   > - `VDD` (inout): connect to supply, e.g. 0.9V
+   > - `AIN` (input): analog input signal, range 0 ~ VDD
+   > - `CLKS` (input): sampling clock, rising edge triggers conversion
+   > - `DOUT[19:0]` (output): 20-bit binary code, MSB = DOUT[19]
+   > - `parameter vdd = 1`: set to match your supply voltage
 
 If the user's request spans multiple categories (e.g., "write me a SAR ADC"), compose modules
 from the relevant categories — one module per function block.
