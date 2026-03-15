@@ -2,7 +2,7 @@
 
 让 Agent 根据用户需求写出符合 Cadence Virtuoso 规范、能直接在 Virtuoso 中使用的 Verilog-A 行为模型。
 
-> **如果你是人类**：下���的技能总览和示例结构可以帮你了解这个包的内容。安装后让 Agent 帮你写 Verilog-A 即可。
+> **如果你是人类**：下面的技能总览和示例结构可以帮你了解这个包的内容。安装后让 Agent 帮你写 Verilog-A 即可。
 
 > **如果你是 AI Agent**：跳过总览，直接看 [安装](#安装) 说明。`veriloga/SKILL.md` 是写代码的完整指令（8 条必需规则 + 12 类电路参考），代码模板在 `assets/template.va`，31 个参考样例在 `assets/examples/`。
 
