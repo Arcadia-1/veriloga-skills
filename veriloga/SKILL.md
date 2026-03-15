@@ -39,6 +39,10 @@ from 1,638 real-world .va files across 10+ circuit domains, plus battle-tested c
    > - `CLKS` (input): sampling clock, rising edge triggers conversion
    > - `DOUT[19:0]` (output): 20-bit binary code, MSB = DOUT[19]
    > - `parameter vdd = 1`: set to match your supply voltage
+10. **Learn user conventions** — if the user comments on code style (e.g., module name casing,
+   port name prefix/suffix, uppercase vs lowercase, bus ordering), ask whether to save the
+   preference to `references/customize.md` so all future modules follow the same convention.
+   Always check `references/customize.md` at the start of every session for existing preferences.
 
 If the user's request spans multiple categories (e.g., "write me a SAR ADC"), compose modules
 from the relevant categories — one module per function block.
