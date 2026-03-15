@@ -7,10 +7,9 @@
 `include "constants.vams"
 `include "disciplines.vams"
 
-module _va_d2b_4b (inout electrical VDD, inout electrical VSS, input electrical VIN, output electrical [3:0] DOUT);
+`default_transition 10p
 
-parameter real trise = 10e-12;
-parameter real tfall = 10e-12;
+module _va_d2b_4b (inout electrical VDD, inout electrical VSS, input electrical VIN, output electrical [3:0] DOUT);
 
 real vh, vl, vref, vin_norm;
 integer code;
@@ -38,7 +37,7 @@ analog begin
 
     // Drive outputs with transition
     for (i = 0; i < 4; i = i + 1) begin
-        V(DOUT[i]) <+ transition(dout[i] ? vh : vl, 0, trise, tfall);
+        V(DOUT[i]) <+ transition(dout[i] ? vh : vl, 0);
     end
 
 end

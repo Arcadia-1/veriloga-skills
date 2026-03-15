@@ -5,6 +5,8 @@
 `include "constants.vams"
 `include "disciplines.vams"
 
+`default_transition 10p
+
 // Domain: <voltage|current>  (auto-classified after code is written)
 
 // Style A: ANSI inline (recommended for Spectre / Virtuoso)
@@ -17,8 +19,6 @@ module MODULE_NAME (inout electrical VDD, inout electrical VSS /* , add ports he
 
     // ── Parameters ─────────────────────────────────────────
     // parameter real    vth    = 0.5;       // decision threshold [V]
-    // parameter real    trise  = 10e-12;    // output rise time [s]
-    // parameter real    tfall  = 10e-12;    // output fall time [s]
     // parameter integer nbits  = 8;         // bit width
 
     // ── Variables (all declared here, before analog begin) ─

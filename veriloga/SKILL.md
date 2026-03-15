@@ -154,8 +154,14 @@ vth = (vh + vl) / 2.0;
 ### Rule 8: Outputs use `transition()` with supply voltages
 Every digital output must go through `transition()` to avoid discontinuities that crash the
 simulator. Use the actual supply voltages, not literals.
+
+Use `` `default_transition `` at the top of the file to set a global rise/fall time, instead
+of declaring separate `trise` / `tfall` parameters:
 ```
-V(out_o) <+ transition(state ? vh : vl, trise, tfall);
+`default_transition 10p
+
+// Then transition() calls don't need explicit rise/fall:
+V(out_o) <+ transition(state ? vh : vl, 0);
 ```
 Never put macros (`` `define`` values) as the delay/rise/fall arguments of `transition()` —
 some simulators can't resolve them there.
