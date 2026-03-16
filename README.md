@@ -84,10 +84,7 @@
 
 > 其他 Agent 将 `.claude/skills/` 替换为对应技能目录（如 `.agent/skills/`）。
 
-**步骤 2 — 运行安装命令**
-
-<details>
-<summary>macOS / Linux</summary>
+**步骤 2 — 运行安装命令**（bash，macOS / Linux / Windows 均适用）
 
 全局：
 ```bash
@@ -104,31 +101,11 @@ git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills /tmp/veriloga-s
   && rm -rf /tmp/veriloga-skills
 ```
 
-</details>
-
-<details>
-<summary>Windows（PowerShell）</summary>
-
-全局：
-```powershell
-git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills $env:TEMP\veriloga-skills `
-  && Copy-Item -Recurse $env:TEMP\veriloga-skills\veriloga,$env:TEMP\veriloga-skills\evas-sim,$env:TEMP\veriloga-skills\openvaf $env:USERPROFILE\.claude\skills\ `
-  && Remove-Item -Recurse -Force $env:TEMP\veriloga-skills
-```
-
-项目级（在项目根目录执行）：
-```powershell
-git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills $env:TEMP\veriloga-skills `
-  && New-Item -ItemType Directory -Force .claude\skills | Out-Null `
-  && Copy-Item -Recurse $env:TEMP\veriloga-skills\veriloga,$env:TEMP\veriloga-skills\evas-sim,$env:TEMP\veriloga-skills\openvaf .claude\skills\ `
-  && Remove-Item -Recurse -Force $env:TEMP\veriloga-skills
-```
-
-</details>
-
 **步骤 3 — 验证**
 
 在 Agent 中运行 `/skills`，输出列表中出现 `veriloga`、`evas-sim`、`openvaf` ✅
+
+> **如果你是 AI Agent**：以上安装步骤由你代为执行，根据用户需求选择全局或项目级安装路径，无需用户手动操作。安装完成后直接读取 `veriloga/SKILL.md` 开始工作。
 
 ### 项目定制
 
