@@ -24,57 +24,7 @@
 
 从 1,809 个真实 .va 设计中提炼的规则和模式，覆盖模拟/混合信号 IC 设计的 12 类电路。生成的代码符合 Cadence Virtuoso / Spectre 规范，可以直接放入 cellview 使用。
 
-### 8 条必需规则
-
-每个生成的模块必须全部通过，否则会导致仿真器报错或产生静默错误结果：
-
-| # | 规则 | 要点 |
-|---|------|------|
-| 1 | 所有信号用 `electrical` 类型 | 不用 `wire` / `logic` / `reg` |
-| 2 | 电源端口用 `inout` | VDD/VSS 声明为 `inout`，不是 `input` |
-| 3 | 电源电压不硬编码 | 用 `V(VDD)` 从端口读取，或用 `parameter real vdd = 1.8` 参数化。默认阈值 `vth = (vdd + vss) / 2` |
-| 4 | 所有变量在模块级声明 | 不能在 `analog begin` 内部声明 |
-| 5 | 循环变量用 `genvar` | 不用 `integer` |
-| 6 | 状态变量在 `@(initial_step)` 中初始化 | 不依赖默认值 |
-| 7 | 边沿检测用 `@(cross())` 并指定方向 | `+1` 上升沿，`-1` 下降沿 |
-| 8 | 输出用 `transition()` 并使用电源电压 | 避免不连续性导致仿真崩溃 |
-
-### 12 类电路参考
-
-| 类别 | 参考文件 | 典型模块 |
-|------|----------|----------|
-| ADC / SAR | `references/categories/adc-sar.md` | SAR 逻辑、CDAC、比较器、pipeline |
-| DAC | `references/categories/dac.md` | 二进制加权、温度计、电流舵 |
-| 比较器 | `references/categories/comparator.md` | StrongARM、动态、锁存 |
-| PLL / 时钟 | `references/categories/pll-clock.md` | VCO、分频器、PFD、charge pump |
-| 采样保持 | `references/categories/sample-hold.md` | 理想 S&H、底板采样、bootstrap |
-| 放大器 & 滤波器 | `references/categories/amplifier-filter.md` | Opamp、OTA、LPF/BPF/HPF |
-| 数字逻辑 | `references/categories/digital-logic.md` | 门电路、DFF、计数器、移位寄存器、FSM |
-| 信号源 | `references/categories/signal-source.md` | AM/FM 调制器、脉冲发生器 |
-| 无源 & 器件模型 | `references/categories/passive-model.md` | R/C/L、失配、温度系数 |
-| 测试台 & 探针 | `references/categories/testbench-probe.md` | TB wrapper、探针、测量 |
-| 电源 & 开关 | `references/categories/power-switch.md` | 理想开关、T-gate、开关电容 |
-| 校准 | `references/categories/calibration.md` | Trim 码生成、前台/后台校准 |
-
-### 31 个参考样例
-
-```
-veriloga/assets/examples/
-├── adc-sar/          SAR 行为模型、CDAC、比较器、同步/异步逻辑（7 个文件）
-├── dac/              二进制加权、单端、差分（4 个文件）
-├── comparator/       锁存型、带噪声建模（2 个文件）
-├── pll-clock/        分频器、鉴频鉴相器（2 个文件）
-├── sample-hold/      极简 S&H、多位采样器（2 个文件）
-├── amplifier-filter/ 差分放大器、一阶 LPF（2 个文件）
-├── digital-logic/    AND 门（带 jitter）、DFF（带 set/reset）（2 个文件）
-├── signal-source/    数据发生器、扫频正弦源（2 个文件）
-├── passive-model/    RLC 网络、肖克利二极管（2 个文件）
-├── testbench-probe/  定时探针、比较器 offset 搜索（2 个文件）
-├── power-switch/     电导开关、电流钳位（2 个文件）
-└── calibration/      SPI trim 寄存器、DAC 码发生器（2 个文件）
-```
-
-所有样例均从真实设计中筛选，经过 8 条规则校验和修正。
+包含 8 条必需规则、12 类电路参考、31 个真实样例。详见 [`veriloga/SKILL.md`](./veriloga/SKILL.md)。
 
 ---
 
@@ -121,7 +71,7 @@ veriloga/assets/examples/
 
 ---
 
-## 安装 / Setup
+## 安装
 
 Clone https://github.com/Arcadia-1/veriloga-skills, copy its skill folders into `.claude/skills/`, then verify with `/skills` command.
 
