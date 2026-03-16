@@ -1,0 +1,84 @@
+{
+  "skill_name": "evas-sim",
+  "evals": [
+    {
+      "id": 1,
+      "should_trigger": true,
+      "prompt": "I have a Verilog-A clock divider model. Can you help me simulate it with EVAS?",
+      "expectations": [
+        "Reads the .va file before attempting simulation",
+        "Checks for unsupported constructs (I() <+, ddt, idt) before proceeding",
+        "Provides evas simulate or evas run command",
+        "Explains output files: tran.csv, strobe.txt, tran.png"
+      ]
+    },
+    {
+      "id": 2,
+      "should_trigger": true,
+      "prompt": "How do I install evas-sim and run an example?",
+      "expectations": [
+        "Suggests uv pip install evas-sim as preferred method",
+        "Mentions pip install evas-sim as fallback",
+        "Shows evas list to verify installation",
+        "Shows evas run <example-name> command"
+      ]
+    },
+    {
+      "id": 3,
+      "should_trigger": true,
+      "prompt": "evas simulate gives me an empty tran.csv. What's wrong?",
+      "expectations": [
+        "Identifies missing save statement in .scs as likely cause",
+        "Explains how to add save sig1 sig2 ... to the netlist",
+        "Does not suggest reinstalling or unrelated fixes"
+      ]
+    },
+    {
+      "id": 4,
+      "should_trigger": true,
+      "prompt": "Can EVAS simulate a MOSFET transistor model written in Verilog-A?",
+      "expectations": [
+        "Says NO — MOSFET uses I() <+ current contributions",
+        "Explains EVAS has no KCL/KVL solver",
+        "Suggests ngspice or Xyce as alternatives",
+        "Does not attempt to simulate the model"
+      ]
+    },
+    {
+      "id": 5,
+      "should_trigger": true,
+      "prompt": "evas run clk_div",
+      "expectations": [
+        "Recognizes this as an evas run command for the bundled clk_div example",
+        "Explains where output goes: ./evas-run/output/clk_div/",
+        "Describes tran.csv and tran.png outputs"
+      ]
+    },
+    {
+      "id": 6,
+      "should_trigger": true,
+      "prompt": "Check if this Verilog-A ADC model is simulatable by EVAS:\n`V(out) <+ transition(dout * lsb, 0, tr);`",
+      "expectations": [
+        "Identifies V(out) <+ with transition() as supported voltage contribution",
+        "Gives a YES answer — this pattern is compatible with EVAS",
+        "Does not falsely flag transition() as unsupported"
+      ]
+    },
+    {
+      "id": 7,
+      "should_trigger": false,
+      "prompt": "How do I write a Verilog-A model for a resistor?",
+      "expectations": [
+        "Does not invoke the evas-sim skill for a general Verilog-A authoring question"
+      ]
+    },
+    {
+      "id": 8,
+      "should_trigger": false,
+      "prompt": "Simulate this Python code using pytest.",
+      "expectations": [
+        "Does not trigger evas-sim — this is about Python testing, not Verilog-A simulation"
+      ]
+    }
+  ]
+}

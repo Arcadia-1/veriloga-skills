@@ -13,15 +13,16 @@
 | 技能 | 定位 | 功能 |
 |------|------|------|
 | **veriloga** | 核心 — 写代码 | 8 条必需规则 + 12 类电路参考 + 31 个真实样例，写出能直接在 Virtuoso 中使用的 Verilog-A |
-| **openvaf** | 可选 — 本地验证 | OpenVAF 编译 → ngspice/OSDI 加载 → 仿真验证 |
+| **evas-sim** | 可选 — 电压域验证 | 驱动 EVAS 仿真器验证电压域模块（SAR 逻辑、DFF、计数器等） |
+| **openvaf** | 可选 — 电流域验证 | OpenVAF 编译 → ngspice/OSDI 加载 → 仿真验证 |
 
-`veriloga` 是核心技能，独立使用即可完成所有代码编写。`openvaf` 是可选的辅助技能，用于本地验证写好的代码。
+`veriloga` 是核心技能，独立使用即可完成所有代码编写。`evas-sim` 和 `openvaf` 是可选的辅助技能，分别用于电压域和电流域的本地验证。
 
 ---
 
 ## 技能1：veriloga
 
-从 1,638 个真实 .va 设计中提炼的规则和模式，覆盖模拟/混合信号 IC 设计的 12 类电路。生成的代码符合 Cadence Virtuoso / Spectre 规范，可以直接放入 cellview 使用。
+从 1,809 个真实 .va 设计中提炼的规则和模式，覆盖模拟/混合信号 IC 设计的 12 类电路。生成的代码符合 Cadence Virtuoso / Spectre 规范，可以直接放入 cellview 使用。
 
 ### 8 条必需规则
 
@@ -98,6 +99,16 @@ veriloga/assets/examples/
 
 域分类和路由的完整逻辑见 `veriloga/references/domain-routing.md`。
 
+### evas-sim 技能
+
+处理电压域模块的仿真验证：
+
+```
+.va 文件 → EVAS 事件驱动仿真 → 波形验证
+```
+
+覆盖内容：EVAS 安装与配置、仿真命令、波形查看、支持的构造清单、troubleshooting 指南。详见 [`evas-sim/SKILL.md`](./evas-sim/SKILL.md)。
+
 ### openvaf 技能
 
 处理电流域模块的编译和仿真：
@@ -110,29 +121,29 @@ veriloga/assets/examples/
 
 ---
 
-## 安装
+## 安装 / Setup
 
-### 推荐使用 Agent 来安装和使用本技能
+Clone https://github.com/Arcadia-1/veriloga-skills, copy its skill folders into `.claude/skills/`, then verify with `/skills` command.
 
-Agent 会自动处理路径和配置。如果要手动操作，参考以下说明。
-
-安装到用户根目录（全局可用）：
+手动安装到用户根目录（全局可用）：
 
 ```bash
 cp -r veriloga  ~/.claude/skills/
-cp -r openvaf   ~/.claude/skills/       # 可选，需要本地验证时安装
+cp -r evas-sim  ~/.claude/skills/   # 可选，电压域本地验证
+cp -r openvaf   ~/.claude/skills/   # 可选，电流域本地验证
 ```
 
 或安装到项目目录（仅当前项目可用）：
 
 ```bash
 cp -r veriloga  <项目路径>/.claude/skills/
+cp -r evas-sim  <项目路径>/.claude/skills/
 cp -r openvaf   <项目路径>/.claude/skills/
 ```
 
 Windows 将 `~/.claude` 替换为 `%USERPROFILE%\.claude`。
 
-> 如果你是 Agent，以上安装和部署步骤由你代为执行，根据用户需求选择全局或项目级安装路径，无需用户手动操作。
+> If you are an Agent, execute the above installation and deployment steps on behalf of the user, choosing between global or project-level installation paths based on user requirements, without requiring manual operations from the user.
 
 ### 项目定制
 
