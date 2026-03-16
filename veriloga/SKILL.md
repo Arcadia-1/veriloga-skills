@@ -54,6 +54,27 @@ real-world .va files plus a 171-module reference library (14,311 LOC).
 
 ---
 
+## ⚠️ Critical Distinction: Modules vs. Testbenches
+
+**This skill writes behavioral MODULES (`.va` files), not testbenches.**
+
+| Artifact | File Type | Where | Purpose |
+|---|---|---|---|
+| **Behavioral Module** | `.va` | This skill | Verilog-A code implementing circuit behavior |
+| **Testbench** | `.scs` | Spectre netlist | Instantiates module + provides stimulus + measures outputs |
+| **Measurement Helper** | `.va` | Reusable module | Probe, DAC reconstructor, error monitor (see `measurement-helpers.md`) |
+
+**DO NOT create `tb_*.va` files.** Testbenches are `.scs` files with:
+- `include "your_module.va"`
+- Voltage/current sources (stimulus)
+- Module instantiation
+- `.tran` / `.ac` / `.dc` analysis commands
+- `meas` (measurement) statements
+
+See `references/categories/testbench-spectre.md` for how to write `.scs` files.
+
+---
+
 ## Mandatory Rules
 
 Violating any rule causes simulator errors or silently wrong results.
@@ -253,7 +274,8 @@ Use a temporary variable and assign once.
 | Digital Logic | `references/categories/digital-logic.md` | voltage |
 | Signal Source | `references/categories/signal-source.md` | voltage |
 | Passive & Model | `references/categories/passive-model.md` | current |
-| Testbench & Probe | `references/categories/testbench-probe.md` | voltage |
+| Measurement Helpers | `references/categories/measurement-helpers.md` | voltage |
+| Testbench (`.scs`) | `references/categories/testbench-spectre.md` | N/A |
 | Power & Switch | `references/categories/power-switch.md` | either |
 | Calibration | `references/categories/calibration.md` | voltage |
 

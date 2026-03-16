@@ -106,7 +106,7 @@ their reference files (saves context):
 ```
 # Example:
 # - signal-source
-# - testbench-probe
+# - measurement-helpers
 ```
 
 ---
