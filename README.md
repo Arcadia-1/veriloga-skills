@@ -157,7 +157,3 @@ Windows 将 `~/.claude` 替换为 `%USERPROFILE%\.claude`。
   - 电流域 → [OpenVAF](https://openvaf.semimod.de/) + [ngspice](http://ngspice.sourceforge.net/)（≥ 38，支持 OSDI）
 
 详见 [requirements.md](./requirements.md)。
-
-## License
-
-This repository is intended for educational and reference purposes.
