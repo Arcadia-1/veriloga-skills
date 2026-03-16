@@ -470,33 +470,12 @@ Do not attempt. Refer to `domain-routing.md § Mixed`.
 
 ## ADC Characterization & Verification
 
-For ADC behavioral models (SAR, flash, pipeline, TIADC, etc.), after successful simulation,
-use **ADCToolbox** to verify functional and spectral performance.
+**If the module is ADC-related (SAR, flash, pipeline, TIADC, etc.), always use python library ADCToolbox for verification. Never hand-roll FFT with scipy.**
 
-### When to Use ADCToolbox
-
-- Module category is **ADC / SAR** (see Category Index)
-- Behavioral model is **complete and simulation-verified**
-- Need to measure spectral metrics: ENOB, SNDR, SFDR, THD, SNR
-- Need to characterize per-channel mismatch (TIADC), nonlinearity, jitter effects
-
-### Key Points
-
-- Use `find_coherent_frequency()` to avoid spectral leakage
-- Access metrics from result dict (e.g., `result['enob']`, `result['sndr_dbc']`)
-- See `references/adc-testbench-guide.md` for complete workflow and theory
-- Example scripts in `assets/examples/adc-verification/`
-
-### Resources
-
-**Local:**
-- `references/adc-testbench-guide.md` — Full workflow, API reference, troubleshooting
-- `assets/examples/adc-verification/testbench_10bit_basic.py` — Basic example
-- `assets/examples/adc-verification/testbench_sar.py` — SAR algorithm example
-
-**Official:**
-- [Arcadia-1/ADCToolbox](https://github.com/Arcadia-1/ADCToolbox) — Main repository
-- [api-quickref.md](https://github.com/Arcadia-1/ADCToolbox/blob/main/skills/adctoolbox-user-guide/references/api-quickref.md) — Complete API reference
+- Metrics: ENOB, SNDR, SFDR, THD, SNR; TIADC per-channel mismatch, nonlinearity, jitter
+- Always call `find_coherent_frequency()` to avoid spectral leakage
+- Read results from the dict: `result['enob']`, `result['sndr_dbc']`, etc.
+- Full workflow: `references/adc-testbench-guide.md` · Examples: `assets/examples/adc-verification/`
 
 ---
 
