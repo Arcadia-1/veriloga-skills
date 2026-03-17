@@ -81,13 +81,27 @@ Violating any rule causes simulator errors or silently wrong results.
 
 No `wire`, `logic`, or `reg`. Spectre accepts two port styles:
 
-**Style A: ANSI inline**
-```
-module example (inout electrical VDD, inout electrical VSS, input electrical clk_i, output electrical [3:0] dout_o);
+**Style A: ANSI inline — each port on its own line, each with its own `electrical`**
+```verilog
+module example (
+    inout  electrical VDD,
+    inout  electrical VSS,
+    input  electrical clk_i,
+    output electrical [3:0] dout_o
+);
 ```
 
-**Style B: Old-style separated**
-```
+> **Cadence Spectre VACOMP pitfall:** `electrical` does NOT carry across a comma.
+> `inout electrical VDD, VSS` gives VSS no discipline → Spectre error.
+> EVAS tolerates this; Spectre rejects it. Always one port per line.
+>
+> | Style | EVAS | Cadence Spectre |
+> |---|---|---|
+> | `inout electrical VDD, VSS` | ✓ tolerates | ✗ VSS has no discipline |
+> | `inout electrical VDD,`<br>`inout electrical VSS,` | ✓ | ✓ |
+
+**Style B: Old-style separated** — discipline declared separately, comma-sharing is safe here:
+```verilog
 module example (VDD, VSS, clk_i, dout_o);
 inout VDD, VSS;
 input clk_i;
@@ -97,7 +111,7 @@ electrical [3:0] dout_o;
 ```
 
 **NOT accepted** — combined `inout electrical` in body:
-```
+```verilog
 module example (VDD, VSS, clk_i, dout_o);
     inout electrical VDD, VSS;       // WRONG — Spectre syntax error
 ```

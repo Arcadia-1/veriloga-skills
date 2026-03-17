@@ -2,6 +2,12 @@
 
 Using **adctoolbox** for ADC behavioral model characterization and verification.
 
+## ⛔ Mandatory Rule
+
+**NEVER hand-roll FFT.** No `np.fft.fft`, no `scipy.signal`, no manual windowing, no manual ENOB formula.
+Use `adctoolbox.analyze_spectrum()` for all spectrum analysis — it handles windowing, harmonic detection,
+and metric calculation correctly.
+
 ---
 
 ## Overview
@@ -211,12 +217,8 @@ plt.close(fig)
 
 ## Complete Example
 
-See `examples/adc-verification/` for full working examples:
-- `testbench_10bit_basic.py` — Single-ended 10-bit ADC with coherent sampling
-- `testbench_sar.py` — SAR ADC algorithm with cycle-by-cycle behavior
-- `testbench_tiadc.py` — Time-interleaved ADC with per-channel mismatch
-
-Each script uses the **real adctoolbox API** shown above.
+See `references/testbench_sar.py` — SAR ADC behavioral model with coherent sampling,
+ideal quantization comparison, and `analyze_spectrum()` output.
 
 ---
 
@@ -243,10 +245,9 @@ Each script uses the **real adctoolbox API** shown above.
    plt.close(fig)
    ```
 
-4. **Check FFT bin** — verify signal landed where expected
+4. **Check FFT bin** — verify signal landed where expected via adctoolbox result
    ```python
-   peak_bin = np.argmax(np.abs(np.fft.fft(code_out)))
-   print(f"Signal at bin {peak_bin}, expected ~{bin_idx}")
+   print(f"Signal at bin {result['signal_bin']}, expected ~{bin_idx}")
    ```
 
 5. **Log metrics to file** — for documentation
@@ -258,7 +259,17 @@ Each script uses the **real adctoolbox API** shown above.
 
 ### ❌ Avoid This
 
-1. **Non-coherent frequencies** — causes spectral leakage
+1. **Hand-rolling FFT** — always forbidden
+   ```python
+   # WRONG — never do this
+   X = np.fft.fft(code_out)
+   psd = np.abs(X)**2
+   enob = ...   # manual formula
+   # scipy.signal is equally forbidden
+   ```
+   Use `analyze_spectrum()` instead. Always.
+
+2. **Non-coherent frequencies** — causes spectral leakage
    ```python
    # WRONG: arbitrary frequency
    fin = 9.7e6
@@ -325,13 +336,8 @@ Then analyze as usual — adctoolbox will show the effect of mismatch on SINAD/T
 ### Issue: ENOB is too low (~8 bits instead of 10)
 
 **Check 1: Coherent frequency?**
-```python
-# Verify signal landed on expected bin
-peak_bin = np.argmax(np.abs(np.fft.fft(code_out)))
-print(f"Peak at bin {peak_bin}, expected ~{bin_idx}")
-if abs(peak_bin - bin_idx) > 2:
-    print("WARNING: Signal not at coherent frequency!")
-```
+
+Use `result['signal_bin']` returned by `analyze_spectrum()` to verify the signal bin.
 
 **Check 2: ADC full-scale range?**
 ```python
