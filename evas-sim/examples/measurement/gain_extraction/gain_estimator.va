@@ -1,0 +1,59 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// Cross-correlation gain estimator (open-loop, one-shot).
+//
+// Accumulates running sum:
+//   sum += V(VAMP_P,VAMP_N) * sign(DPN)   each CLK rising edge
+//
+// Strobes gain estimate at sample counts N = 2^8, 2^9, ..., 2^16.
+// Stops after N_TOTAL samples.
+//
+// Ideal result: A_est = sum / (N * DITHER_AMP) = ACTUAL_GAIN
+
+module gain_estimator(
+    input electrical CLK,
+    input electrical RST_N,
+    input electrical VAMP_P,
+    input electrical VAMP_N,
+    input electrical DPN
+);
+
+parameter real    vth        = 0.45;
+parameter integer N_TOTAL    = 65536;   // 2^16
+parameter real    DITHER_AMP = 0.014063;
+
+integer sample_cnt;
+integer next_milestone;
+real    sum_corr;
+real    sign_d, A_est;
+
+analog begin
+    @(initial_step) begin
+        sample_cnt     = 0;
+        next_milestone = 256;       // first milestone: 2^8
+        sum_corr       = 0.0;
+        $strobe("[gain_est] INIT | N_TOTAL=%d | DITHER_AMP=%.6f", N_TOTAL, DITHER_AMP);
+    end
+
+    @(cross(V(CLK) - vth, +1)) begin
+        if (V(RST_N) < vth) begin
+            sample_cnt     = 0;
+            next_milestone = 256;
+            sum_corr       = 0.0;
+        end else if (sample_cnt < N_TOTAL) begin
+            sign_d     = (V(DPN) > vth) ? 1.0 : -1.0;
+            sum_corr   = sum_corr + V(VAMP_P, VAMP_N) * sign_d;
+            sample_cnt = sample_cnt + 1;
+
+            if (sample_cnt == next_milestone) begin
+                A_est = sum_corr / (sample_cnt * DITHER_AMP);
+                $strobe("[gain_est] N=%d | A_est=%.6f", sample_cnt, A_est);
+                next_milestone = next_milestone * 2;
+            end
+        end
+    end
+end
+
+endmodule

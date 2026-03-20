@@ -1,0 +1,23 @@
+`include "disciplines.vams"
+`include "constants.vams"
+
+// AND gate: out = 1  iff  a=1 AND b=1
+module and_gate(a, b, out);
+    input  a, b;
+    output out;
+    electrical a, b, out;
+
+    parameter real vth   = 0.4;    // VDD/2
+    parameter real vhigh = 0.8;    // output high level (V)
+    parameter real vlow  = 0.0;    // output low  level (V)
+
+    `default_transition 30p
+
+    analog begin
+        @(initial_step)
+            $strobe("[and_gate] INIT | vth=%.3gV | vhigh=%.3gV", vth, vhigh);
+        V(out) <+ transition(
+            (V(a) > vth && V(b) > vth) ? vhigh : vlow,
+            30p);
+    end
+endmodule

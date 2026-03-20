@@ -1,0 +1,97 @@
+module ramp_gen (
+    input  electrical        clk_dtc,
+    input  electrical        rst_n,
+    output electrical [11:0] code
+);
+
+    // -------------------------------------------------------
+    // Parameters
+    // -------------------------------------------------------
+    parameter integer DIRECTION     = 1;     // 1 for Up (MIN to MAX), 0 for Down (MAX to MIN)
+    parameter integer MIN_CODE      = 950;   // Lower bound of the range
+    parameter integer MAX_CODE      = 1050;  // Upper bound of the range
+    parameter integer STEP_SIZE     = 1;     // Increment/Decrement step
+    parameter integer N_CYCLE_START = 3;     // Number of initial clock cycles to wait
+    parameter integer UPDATE_DIV    = 1;     // Update code every N active cycles
+    
+    parameter real    vh  = 0.8;             // Logic High voltage
+    parameter real    vl  = 0.0;             // Logic Low voltage
+    parameter real    vth = 0.4;             // Clock threshold voltage
+
+    // -------------------------------------------------------
+    // Internal registers
+    // -------------------------------------------------------
+    integer code_reg;
+    integer cycle_count;   // Global cycle counter for start-up delay
+    integer active_count;  // Counter for frequency division (UPDATE_DIV)
+    genvar i;
+
+    analog begin
+
+        // Initialization at the start of simulation
+        @ (initial_step) begin
+            cycle_count  = 0;
+            active_count = 0;
+            if (DIRECTION == 1)
+                code_reg = MIN_CODE;
+            else
+                code_reg = MAX_CODE;
+            $strobe("[ramp_gen] INIT | dir=%d | code=%d", DIRECTION, code_reg);
+        end
+
+        // Trigger logic on the rising edge of clk_dtc
+        @(cross(V(clk_dtc) - vth, +1)) begin
+            // Synchronous reset (only for mid-simulation resets)
+            if (V(rst_n) < vth) begin
+                cycle_count  = 0;
+                active_count = 0;
+                if (DIRECTION == 1)
+                    code_reg = MIN_CODE;
+                else
+                    code_reg = MAX_CODE;
+                $strobe("[ramp_gen] t=%.3f ns | RESET | code=%d", $abstime*1e9, code_reg);
+            end
+            else begin
+                cycle_count = cycle_count + 1;
+
+                // Wait until the initial cycle offset is reached
+                if (cycle_count >= N_CYCLE_START) begin
+                    active_count = active_count + 1;
+                    
+                    // Update code_reg only after UPDATE_DIV cycles
+                    if (active_count >= UPDATE_DIV) begin
+                        active_count = 0; 
+                        
+                        if (DIRECTION == 1) begin
+                            // UPward Ramp: Stop at MAX_CODE
+                            if (code_reg + STEP_SIZE <= MAX_CODE)
+                                code_reg = code_reg + STEP_SIZE;
+                            else
+                                code_reg = MAX_CODE;
+                        end else begin
+                            // DOWNward Ramp: Stop at MIN_CODE
+                            if (code_reg - STEP_SIZE >= MIN_CODE)
+                                code_reg = code_reg - STEP_SIZE;
+                            else
+                                code_reg = MIN_CODE;
+                        end
+                    end
+                end
+            end
+            
+            // Debug print
+            $strobe("[ramp_gen] t=%.3f ns | cycle=%d | code=%d", $abstime*1e9, cycle_count, code_reg);
+        end
+        
+        
+        // ---------------------------------------------------
+        // Output Drivers
+        // ---------------------------------------------------
+        
+        // Parallel 12-bit digital output with transition filter
+        for (i = 0; i < 12; i = i + 1) begin
+            V(code[i]) <+ transition((code_reg & (1 << i)) ? vh : vl);
+        end
+
+    end
+endmodule

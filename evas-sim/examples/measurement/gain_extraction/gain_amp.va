@@ -1,0 +1,53 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// Programmable-gain differential residue amplifier.
+//
+// Gain control (8-bit CTRL[7:0]):
+//   configured_gain = GAIN_MIN + ctrl_code * (GAIN_MAX - GAIN_MIN) / 255
+//   code=0 -> 7.2 (-10%),  code=128 -> ~8.003 (nominal),  code=255 -> 8.8 (+10%)
+//
+// actual_gain = configured_gain * (1 + GAIN_ERR)   (fixed process mismatch)
+//
+// VOUT_P = vdd/2 + actual_gain * (VIN_P - VIN_N) / 2
+// VOUT_N = vdd/2 - actual_gain * (VIN_P - VIN_N) / 2
+
+module gain_amp(
+    input  electrical        VIN_P,
+    input  electrical        VIN_N,
+    input  electrical [7:0]  CTRL,
+    output electrical        VOUT_P,
+    output electrical        VOUT_N
+);
+
+parameter real vdd      = 0.9;
+parameter real vth      = 0.45;
+parameter real GAIN_ERR = 0.08;
+parameter real GAIN_MIN = 7.2;
+parameter real GAIN_MAX = 8.8;
+
+real    configured_gain, actual_gain, vout_diff;
+integer ctrl_code;
+genvar  k;
+
+analog begin
+    @(initial_step)
+        $strobe("[gain_amp] INIT | GAIN_ERR=%+.1f%%", GAIN_ERR*100);
+
+    // Decode CTRL[7:0] (combinatorial)
+    ctrl_code = 0;
+    for (k = 0; k < 8; k = k + 1) begin
+        if (V(CTRL[k]) > vth)
+            ctrl_code = ctrl_code + (1 << k);
+    end
+
+    configured_gain = GAIN_MIN + ctrl_code * (GAIN_MAX - GAIN_MIN) / 255.0;
+    actual_gain     = configured_gain * (1.0 + GAIN_ERR);
+    vout_diff       = actual_gain * V(VIN_P, VIN_N);
+
+    V(VOUT_P) <+ transition(vth + vout_diff * 0.5, 0);
+    V(VOUT_N) <+ transition(vth - vout_diff * 0.5, 0);
+end
+
+endmodule

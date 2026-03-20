@@ -13,12 +13,12 @@ Finished modules can be verified locally. There are two verification paths depen
 Applies to modules that use `V() <+` + `@(cross())` / `transition()` (SAR logic, DFF, counter, etc.).
 
 ```bash
-pip install evas
+uv tool install evas-sim
 ```
 
 | Tool | Purpose | How to get |
 |------|---------|------------|
-| [EVAS](https://evas.tokenzhang.com/) | Event-driven Verilog-A simulator | `pip install evas-sim` |
+| [EVAS](https://evas.tokenzhang.com/) | Event-driven Verilog-A simulator | `uv tool install evas-sim` |
 | **evas-sim skill** | Complete instructions for Agent-driven EVAS simulation | `evas-sim/SKILL.md` in this repo |
 
 ### Current-Domain Verification — OpenVAF + ngspice

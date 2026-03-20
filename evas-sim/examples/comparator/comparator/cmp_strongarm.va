@@ -1,0 +1,61 @@
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module cmp_strongarm (
+    input  electrical CLK,
+    input  electrical VINN,
+    input  electrical VINP,
+    output electrical DCMPN,
+    output electrical DCMPP,
+    output electrical LP,
+    output electrical LM,
+    inout  electrical VSS,
+    inout  electrical VDD
+);
+
+parameter real td_cmp = 0.0;
+parameter real voffset = 0.0;
+
+real vdd;
+integer xoutp, xoutn;
+real tedge = 20p;
+
+real v_diff_ideal;
+real v_diff_offset;
+
+real vinp_mV;
+real vinn_mV;
+real vdiff_ideal_mV;
+real vdiff_offset_mV;
+
+analog begin
+    vdd = V(VDD);
+
+    v_diff_ideal = V(VINP) - V(VINN);
+    v_diff_offset = v_diff_ideal - voffset;
+
+    @(cross(V(CLK) - vdd*0.5, +1)) begin
+        vinp_mV       = V(VINP) * 1e3;
+        vinn_mV       = V(VINN) * 1e3;
+        vdiff_ideal_mV = v_diff_ideal * 1e3;
+        vdiff_offset_mV = v_diff_offset * 1e3;
+
+        xoutp = (v_diff_offset > 0);
+        xoutn = (v_diff_offset < 0);
+
+        $strobe("[cmp_strongarm] t=%.3f ns | vinp=%.2fmV | vinn=%.2fmV | diff=%.2fmV | diff_off=%.2fmV | dec=%d",
+                $abstime*1e9, vinp_mV, vinn_mV, vdiff_ideal_mV, vdiff_offset_mV, xoutp);
+    end
+
+    @(cross(V(CLK) - vdd*0.5, -1)) begin
+        xoutp = 0;
+        xoutn = 0;
+    end
+
+    V(DCMPP) <+ transition(vdd * xoutp, td_cmp, tedge, tedge);
+    V(DCMPN) <+ transition(vdd * xoutn, td_cmp, tedge, tedge);
+
+end
+
+endmodule

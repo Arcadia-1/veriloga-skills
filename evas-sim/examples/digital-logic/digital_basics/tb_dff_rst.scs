@@ -1,0 +1,41 @@
+// tb_dff_rst.scs — D flip-flop with synchronous reset
+//
+// CLK: 2 ns period, rising edges at t = 0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5,
+//                                        14.5, 16.5, 18.5 ns
+// D:   0 → 1 at 5 ns → 0 at 11 ns → 1 at 17 ns
+// RST: high from 7 ns to 9.5 ns  (active at CLK edge t=8.5 ns)
+//
+// Expected Q after each rising CLK edge:
+//   @0.5n  D=0 RST=0 → Q=0
+//   @2.5n  D=0 RST=0 → Q=0
+//   @4.5n  D=0 RST=0 → Q=0   (D changes at 5n, after this edge)
+//   @6.5n  D=1 RST=0 → Q=1
+//   @8.5n  D=1 RST=1 → Q=0   (synchronous reset)
+//   @10.5n D=1 RST=0 → Q=1   (RST deasserted at 9.5n)
+//   @12.5n D=0 RST=0 → Q=0   (D changes at 11n)
+//   @14.5n D=0 RST=0 → Q=0
+//   @16.5n D=0 RST=0 → Q=0   (D changes at 17n)
+//   @18.5n D=1 RST=0 → Q=1
+simulator lang=spectre
+global 0
+
+ahdl_include "dff_rst.va"
+
+VCLK (clk 0) vsource type=pulse val0=0 val1=0.8 \
+             period=2n width=1n delay=0.5n rise=30p fall=30p
+
+VD (d 0) vsource type=pwl wave=[0 0 \
+                                 4.985n 0  5.015n 0.8 \
+                                 10.985n 0.8  11.015n 0 \
+                                 16.985n 0  17.015n 0.8 \
+                                 20n 0.8]
+
+VRST (rst 0) vsource type=pwl wave=[0 0 \
+                                    6.985n 0  7.015n 0.8 \
+                                    9.485n 0.8  9.515n 0 \
+                                    20n 0]
+
+IDUT (clk d rst q qbar) dff_rst
+
+tran tran stop=20n maxstep=0.1n
+save clk:2e d:d rst:d q:2e qbar:2e

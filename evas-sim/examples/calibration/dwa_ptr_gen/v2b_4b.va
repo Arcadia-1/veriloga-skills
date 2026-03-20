@@ -1,0 +1,45 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 100p
+
+// v2b_4b: Ideal voltage-to-4-bit binary converter.
+// Samples V(vin) on CLK rising edge; maps floor(vin + 0.5) -> code [0..15].
+// Outputs 4 digital bits (MSB-first: out_3..out_0) at VDD level.
+module v2b_4b (
+    input  electrical clk,
+    input  electrical vin,
+    output electrical out_3,
+    output electrical out_2,
+    output electrical out_1,
+    output electrical out_0
+);
+    parameter real vdd = 0.9;
+    parameter real tedge = 100p;
+
+    integer code;
+    real    clk_th;
+
+    analog begin
+        clk_th = 0.5 * vdd;
+
+        @(initial_step) begin
+            code = 0;
+        end
+
+        @(cross(V(clk) - clk_th, +1)) begin
+            code = floor(V(vin) + 0.5);
+            if (code < 0)  code = 0;
+            if (code > 15) code = 15;
+            $strobe("[v2b_4b] t=%.3f ns | vin=%.3fV -> code=%d (0b%d%d%d%d)",
+                    $abstime * 1e9, V(vin), code,
+                    (code >> 3) & 1, (code >> 2) & 1,
+                    (code >> 1) & 1, (code >> 0) & 1);
+        end
+
+        V(out_3) <+ transition(vdd * ((code >> 3) & 1), 0, tedge, tedge);
+        V(out_2) <+ transition(vdd * ((code >> 2) & 1), 0, tedge, tedge);
+        V(out_1) <+ transition(vdd * ((code >> 1) & 1), 0, tedge, tedge);
+        V(out_0) <+ transition(vdd * ((code >> 0) & 1), 0, tedge, tedge);
+    end
+endmodule

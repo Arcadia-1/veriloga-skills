@@ -1,0 +1,24 @@
+`include "disciplines.vams"
+`include "constants.vams"
+
+// Single inverter with explicit propagation delay and transition time.
+module inverter(a, out);
+    input  a;
+    output out;
+    electrical a, out;
+
+    parameter real vth   = 0.4;   // logic threshold = VDD/2
+    parameter real vhigh = 0.8;   // output high level (V)
+    parameter real vlow  = 0.0;   // output low  level (V)
+    parameter real td    = 100p;  // propagation delay (s)
+    parameter real tr    = 50p;   // rise/fall time (s)
+
+    analog begin
+        @(initial_step)
+            $strobe("[inverter] INIT | td=%.3gps | tr=%.3gps | vhigh=%.3gV",
+                    td*1e12, tr*1e12, vhigh);
+        V(out) <+ transition(
+            (V(a) > vth) ? vlow : vhigh,
+            td, tr, tr);
+    end
+endmodule

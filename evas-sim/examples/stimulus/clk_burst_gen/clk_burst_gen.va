@@ -1,0 +1,55 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 30p
+
+// Outputs two consecutive CLK pulses every `div` input clock cycles.
+// CLK_OUT mirrors CLK for cycles 0 and 1, then stays low until the period resets.
+// RST_N (active-low reset) restarts the counter and re-enables the gate.
+
+module clk_burst_gen (
+    input  electrical CLK,
+    input  electrical RST_N,
+    output electrical CLK_OUT
+);
+
+parameter integer div = 8;   // burst period in CLK cycles (must be >= 3)
+parameter real    vdd = 0.9;
+parameter real    vth = 0.45;
+
+integer counter_q;  // 0 .. div-1
+integer gate_q;     // 1 = pass CLK through, 0 = hold low
+integer clk_hi;     // tracks current CLK level for continuous output
+
+analog begin
+    @(initial_step) begin
+        counter_q = 0;
+        gate_q    = 0;
+        clk_hi    = 0;
+        $strobe("[clk_burst_gen] INIT | div=%d | vdd=%.3gV | vth=%.3gV", div, vdd, vth);
+    end
+
+    @(cross(V(CLK) - vth, +1)) begin
+        clk_hi = 1;
+        if (V(RST_N) < vth) begin
+            counter_q = 0;
+            gate_q    = 0;
+        end else begin
+            // Gate decision uses counter BEFORE incrementing:
+            //   counter=0 → gate=1 (pulse 1 high phase)
+            //   counter=1 → gate=1 (pulse 2 high phase)
+            //   counter>=2 → gate=0
+            gate_q    = (counter_q < 2) ? 1 : 0;
+            counter_q = counter_q + 1;
+            if (counter_q >= div) counter_q = 0;
+        end
+        $strobe("[clk_burst_gen] t=%.3f ns | counter=%d | gate=%d", $abstime*1e9, counter_q, gate_q);
+    end
+
+    @(cross(V(CLK) - vth, -1))
+        clk_hi = 0;
+
+    V(CLK_OUT) <+ transition((gate_q && clk_hi) ? vdd : 0.0);
+end
+
+endmodule

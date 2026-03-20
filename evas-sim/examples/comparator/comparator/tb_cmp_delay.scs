@@ -1,0 +1,34 @@
+// cmp_delay: log-linear regeneration delay  td = td_0 + tau*ln(VDD/|Vdiff|)
+// tau=4.34ps, td_0=20.5ps  →  10mV:40ps, 1mV:50ps, 0.1mV:60ps, 0.01mV:70ps
+// Four 4ns phases (4 clk cycles each) spanning 3 decades of |diff|, 1GHz 50% duty
+// VCM=0.45V (VDD/2), all positive polarity (vinp > vinn)
+simulator lang=spectre
+global 0
+
+ahdl_include "cmp_delay.va"
+ahdl_include "edge_interval_timer.va"
+
+// Power supplies
+Vvdd (vdd 0) vsource dc=0.9 type=dc
+Vgnd (gnd 0) vsource dc=0.0 type=dc
+
+// Clock: 1GHz, 50% duty cycle, delay=100ps
+Vclk (clk 0) vsource type=pulse val0=0 val1=0.9 period=1n delay=100p \
+        rise=50p fall=50p width=450p
+
+// Differential input: VCM=0.45V, 4 phases × 4ns (4 clk cycles each)
+// Phase 1  (0-4ns):  diff=+10mV   (VINP=455mV,     VINN=445mV)
+// Phase 2  (4-8ns):  diff=+1mV    (VINP=450.5mV,   VINN=449.5mV)
+// Phase 3  (8-12ns): diff=+0.1mV  (VINP=450.05mV,  VINN=449.95mV)
+// Phase 4 (12-16ns): diff=+0.01mV (VINP=450.005mV, VINN=449.995mV)
+Vvinp (vinp 0) vsource type=pwl wave=[0 0.455 3.9e-9 0.455 4e-9 0.4505 7.9e-9 0.4505 8e-9 0.45005 11.9e-9 0.45005 12e-9 0.450005 16e-9 0.450005]
+Vvinn (vinn 0) vsource type=pwl wave=[0 0.445 3.9e-9 0.445 4e-9 0.4495 7.9e-9 0.4495 8e-9 0.44995 11.9e-9 0.44995 12e-9 0.449995 16e-9 0.449995]
+
+// DUT (port order: CLK VINN VINP DCMPN DCMPP LP LM VSS VDD)
+IDUT (clk vinn vinp out_n out_p lp_int lm_int gnd vdd) cmp_delay
+
+// Edge-interval timer: measures CLK→out_p propagation delay
+IEIT (clk out_p delay_ps) edge_interval_timer VTH=0.45
+
+tran tran stop=16n maxstep=10p
+save clk:2e vinp:7f vinn:7f out_p:2e out_n:2e delay_ps:6e

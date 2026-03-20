@@ -1,0 +1,23 @@
+// cmp_ideal: ideal clocked comparator (instantaneous, no offset)
+simulator lang=spectre
+global 0
+
+ahdl_include "cmp_ideal.va"
+
+// Power supplies
+Vvdd (vdd 0) vsource dc=0.9 type=dc
+Vgnd (gnd 0) vsource dc=0.0 type=dc
+
+// Clock: 1GHz (1ns period), 50% duty cycle, delayed 0.5ns
+Vclk (clk 0) vsource type=pulse val0=0 val1=0.9 period=1n delay=0.5n \
+        rise=20p fall=20p width=480p
+
+// Differential input: VCM=0.45V (VDD/2), diff=1mV (±0.5mV), polarity swaps at 2ns (2 clk cycles)
+Vvinp (vinp 0) vsource type=pwl wave=[0 0.4505 1.9e-9 0.4505 2e-9 0.4495 4e-9 0.4495]
+Vvinn (vinn 0) vsource type=pwl wave=[0 0.4495 1.9e-9 0.4495 2e-9 0.4505 4e-9 0.4505]
+
+// DUT (port order: CLK VINN VINP DCMPN DCMPP LP LM VSS VDD)
+IDUT (clk vinn vinp out_n out_p lp_int lm_int gnd vdd) cmp_ideal
+
+tran tran stop=4n maxstep=5p
+save clk:2e vinp:6f vinn:6f out_p:2e out_n:2e

@@ -1,0 +1,45 @@
+// dac_therm_16b: 16-bit thermometer DAC
+// vout = count_of_ones * vstep
+simulator lang=spectre
+global 0
+
+ahdl_include "dac_therm_16b.va"
+
+// Reset: deassert at 5ns
+Vrst_n (rst_n 0) vsource type=pwl \
+        wave=[0 0 4n 0 5n 0.9 3000n 0.9]
+
+// Thermometer input: step count of ones from 0 to 16
+// t=50ns:   all zeros -> vout=0V
+// t=200ns:  4 ones    -> vout=4V
+// t=400ns:  8 ones    -> vout=8V
+// t=600ns:  12 ones   -> vout=12V
+// t=800ns:  16 ones   -> vout=16V
+
+// bits 0..3: go high at 200ns (give 4 ones)
+Vd0  (d0  0) vsource type=pwl wave=[0 0 199n 0 200n 0.9 3000n 0.9]
+Vd1  (d1  0) vsource type=pwl wave=[0 0 199n 0 200n 0.9 3000n 0.9]
+Vd2  (d2  0) vsource type=pwl wave=[0 0 199n 0 200n 0.9 3000n 0.9]
+Vd3  (d3  0) vsource type=pwl wave=[0 0 199n 0 200n 0.9 3000n 0.9]
+// bits 4..7: go high at 400ns (adds 4 more -> 8 total)
+Vd4  (d4  0) vsource type=pwl wave=[0 0 399n 0 400n 0.9 3000n 0.9]
+Vd5  (d5  0) vsource type=pwl wave=[0 0 399n 0 400n 0.9 3000n 0.9]
+Vd6  (d6  0) vsource type=pwl wave=[0 0 399n 0 400n 0.9 3000n 0.9]
+Vd7  (d7  0) vsource type=pwl wave=[0 0 399n 0 400n 0.9 3000n 0.9]
+// bits 8..11: go high at 600ns (adds 4 more -> 12 total)
+Vd8  (d8  0) vsource type=pwl wave=[0 0 599n 0 600n 0.9 3000n 0.9]
+Vd9  (d9  0) vsource type=pwl wave=[0 0 599n 0 600n 0.9 3000n 0.9]
+Vd10 (d10 0) vsource type=pwl wave=[0 0 599n 0 600n 0.9 3000n 0.9]
+Vd11 (d11 0) vsource type=pwl wave=[0 0 599n 0 600n 0.9 3000n 0.9]
+// bits 12..15: go high at 800ns (adds 4 more -> 16 total)
+Vd12 (d12 0) vsource type=pwl wave=[0 0 799n 0 800n 0.9 3000n 0.9]
+Vd13 (d13 0) vsource type=pwl wave=[0 0 799n 0 800n 0.9 3000n 0.9]
+Vd14 (d14 0) vsource type=pwl wave=[0 0 799n 0 800n 0.9 3000n 0.9]
+Vd15 (d15 0) vsource type=pwl wave=[0 0 799n 0 800n 0.9 3000n 0.9]
+
+// DUT: ports din_therm[15:0] rst_n vout (MSB-first bus)
+IDUT (d15 d14 d13 d12 d11 d10 d9 d8 d7 d6 d5 d4 d3 d2 d1 d0 \
+      rst_n vout) dac_therm_16b vstep=1.0 vth=0.4
+
+tran tran stop=2000n maxstep=1n
+save rst_n:d d15:d d14:d d13:d d12:d d11:d d10:d d9:d d8:d d7:d d6:d d5:d d4:d d3:d d2:d d1:d d0:d vout:3f

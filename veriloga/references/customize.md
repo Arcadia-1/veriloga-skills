@@ -128,17 +128,18 @@ Force all modules to a specific domain (bypasses code-level analysis):
 ### Custom Voltage-Domain Simulator
 
 Path and invocation for the EVAS voltage-domain simulator
-(https://evas.tokenzhang.com/ — still in development):
+(https://evas.tokenzhang.com/):
 
 ```
 # voltage_simulator_path: /path/to/evas
 # voltage_simulator_cmd: evas run {file}
-# evas_status: in-development
+# evas_status: ready
 ```
 
-When `evas_status` is `in-development`, the skill will classify the domain and
-confirm the module is EVAS-compatible, but will NOT attempt to invoke the simulator.
-Change to `ready` once EVAS CLI is usable.
+When `evas_status` is `ready`, the skill may invoke EVAS for voltage-domain
+modules when the CLI is available in the current environment.
+If EVAS is not installed or not desired for a workspace, keep using domain
+classification plus static compatibility checks against the manifest.
 
 ### Disable Routing
 

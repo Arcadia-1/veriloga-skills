@@ -1,0 +1,38 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+// Clock divider: divides input clock by `ratio`.
+// Output is high for the upper half of each period → 50% duty cycle when ratio is even.
+// Counts rising edges; output toggles at the midpoint.
+
+module clk_div (
+    input  electrical in,
+    output electrical out
+);
+
+parameter integer ratio = 2;    // division ratio (>= 1)
+parameter real    vdd   = 0.9;
+parameter real    tt    = 10p;  // output transition time
+parameter real    td    = 0;    // output delay
+
+integer count;
+integer n;
+
+analog begin
+    @(initial_step) begin
+        count = 0;
+        n     = 0;
+        $strobe("[clk_div] INIT | ratio=%d | vdd=%.3gV", ratio, vdd);
+    end
+
+    @(cross(V(in) - 0.5, +1)) begin
+        count = count + 1;
+        if (count >= ratio) count = 0;
+        n = (2 * count >= ratio) ? 1 : 0;
+        $strobe("[clk_div] t=%.3f ns | count=%d | n=%d", $abstime*1e9, count, n);
+    end
+
+    V(out) <+ transition(n ? vdd : 0.0, td, tt, tt);
+end
+
+endmodule

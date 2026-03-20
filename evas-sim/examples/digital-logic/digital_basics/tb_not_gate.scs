@@ -1,0 +1,19 @@
+// tb_not_gate.scs — NOT gate inversion check
+// Input toggles every 2 ns: 0→1→0→1
+//   t=0..2n   A=0 → out=1
+//   t=2..4n   A=1 → out=0
+//   t=4..6n   A=0 → out=1
+//   t=6..8n   A=1 → out=0
+simulator lang=spectre
+global 0
+
+ahdl_include "not_gate.va"
+
+VA (a 0) vsource type=pwl wave=[0 0  1.985n 0  2.015n 0.8 \
+                                 3.985n 0.8  4.015n 0 \
+                                 5.985n 0    6.015n 0.8  8n 0.8]
+
+IDUT (a y) not_gate
+
+tran tran stop=8n maxstep=0.1n
+save a:2e y:2e

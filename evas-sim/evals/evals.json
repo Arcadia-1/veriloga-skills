@@ -17,7 +17,7 @@
       "should_trigger": true,
       "prompt": "How do I install evas-sim and run an example?",
       "expectations": [
-        "Suggests uv pip install evas-sim as preferred method",
+        "Suggests uv tool install evas-sim as preferred method",
         "Mentions pip install evas-sim as fallback",
         "Shows evas list to verify installation",
         "Shows evas run <example-name> command"

@@ -1,0 +1,36 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// Differential dither adder.
+//
+//   dither_diff = +DITHER_AMP  when DPN > vth
+//   dither_diff = -DITHER_AMP  when DPN < vth
+//   VOUT_P = VRES_P + dither_diff / 2
+//   VOUT_N = VRES_N - dither_diff / 2
+
+module dither_adder(
+    input  electrical VRES_P,
+    input  electrical VRES_N,
+    input  electrical DPN,
+    output electrical VOUT_P,
+    output electrical VOUT_N
+);
+
+parameter real vdd        = 0.9;
+parameter real vth        = 0.45;
+parameter real DITHER_AMP = 0.014063;
+
+real dither_diff;
+
+analog begin
+    @(initial_step)
+        $strobe("[dither_adder] INIT | DITHER_AMP=%.4fmV", DITHER_AMP*1e3);
+
+    dither_diff = (V(DPN) > vth) ? DITHER_AMP : -DITHER_AMP;
+
+    V(VOUT_P) <+ transition(V(VRES_P) + dither_diff * 0.5, 0);
+    V(VOUT_N) <+ transition(V(VRES_N) - dither_diff * 0.5, 0);
+end
+
+endmodule

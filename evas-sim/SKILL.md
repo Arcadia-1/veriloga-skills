@@ -42,9 +42,9 @@ Read the `.va` file before simulating. If any unsupported pattern is found, stop
 ## Install
 
 ```bash
-uv pip install evas-sim   # preferred
-pip install evas-sim      # fallback
-evas list                 # verify: prints 14 bundled example groups
+uv tool install evas-sim  # preferred CLI install
+pip install evas-sim      # fallback if using a virtualenv
+evas list                 # verify CLI install; current v0.4.3 prints 14 bundled groups
 ```
 
 If `evas` is not found after install, use `python -m evas` or check virtualenv activation.
@@ -109,26 +109,27 @@ Key points illustrated here:
 - `ahdl_include` is the last statement
 - No `info` statements, no PSF save keys (`write=`, `savetime=` etc.) - EVAS does not use them; output goes to `-o output/dir`
 
-## Bundled example groups (14 total)
+## Example library
 
-Each group provides `.va` models, `.scs` testbench netlists, and Python analysis scripts.
+Use the local repository example library as the primary reference:
 
-| Group | Sub-examples |
+- `examples/README.md`
+- `examples/manifest.json`
+
+The current `evas-sim` PyPI release (`0.4.3`) still bundles 14 runnable example
+groups for smoke testing via `evas list` / `evas run`, but the skill-owned
+examples in this repo are the source of truth for structure and categorization.
+
+### Local categories
+
+| Category | Examples |
 |-------|-------------|
-| `clk_div` | Clock divider |
-| `clk_burst_gen` | Clock burst generator |
-| `digital_basics` | AND, OR, NOT, DFF, inverter chain |
-| `lfsr` | Linear feedback shift register |
-| `noise_gen` | Gaussian noise generator |
-| `ramp_gen` | Ramp generator |
-| `edge_interval_timer` | Edge-interval timer |
-| `d2b_4b` | 4-bit thermometer-to-binary |
-| `dac_binary_clk_4b` | 4-bit binary DAC (clocked) |
-| `dac_therm_16b` | 16-bit thermometer DAC |
-| `adc_dac_ideal_4b` | 4-bit ADC+DAC: ramp / sine / 1000-pt sine |
-| `comparator` | a) ideal  b) StrongARM  c) offset search  d) delay |
-| `dwa_ptr_gen` | a) overlap  b) no-overlap - 100 MHz, `v2b_4b` voltage input |
-| `sar_adc_dac_weighted_8b` | 8-bit SAR ADC+DAC, DNL/INL |
+| `data-converter` | `adc_dac_ideal_4b`, `d2b_4b`, `dac_binary_clk_4b`, `dac_therm_16b`, `sar_adc_dac_weighted_8b` |
+| `comparator` | `comparator` |
+| `digital-logic` | `clk_div`, `digital_basics`, `lfsr` |
+| `calibration` | `dwa_ptr_gen` |
+| `stimulus` | `clk_burst_gen`, `noise_gen`, `ramp_gen` |
+| `measurement` | `gain_extraction` |
 
 ## Output files
 

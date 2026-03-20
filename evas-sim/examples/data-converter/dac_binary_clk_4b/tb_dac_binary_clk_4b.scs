@@ -1,0 +1,56 @@
+// DAC_4B: 4-bit binary-weighted DAC — full code sweep 0 to 15
+simulator lang=spectre
+global 0
+
+ahdl_include "dac_binary_clk_4b.va"
+
+parameters vdd=0.9 vth=0.45
+
+// RDY clock: 40ns period, triggers DAC update at center of each code window
+Vclk  (rdy  0) vsource type=pulse val0=0 val1=vdd period=40n delay=20n \
+        rise=100p fall=100p
+
+// Digital inputs sweep all 16 codes in binary order (code 0 → 15)
+// Each bit toggles at the code boundary (100ps before nominal edge for settling)
+//
+//   DIN3 (MSB): LOW codes 0-7  (t=0-320n), HIGH codes 8-15 (t=320-640n)
+//   DIN2:       LOW codes 0-3, HIGH 4-7, LOW 8-11, HIGH 12-15  (80ns blocks)
+//   DIN1:       toggles every 2 codes (40ns blocks)
+//   DIN0 (LSB): toggles every code (20ns blocks)
+
+Vdin3 (din3 0) vsource type=pwl wave=[ \
+        0 0  319.9e-9 0 \
+        320e-9 0.9  640e-9 0.9]
+
+Vdin2 (din2 0) vsource type=pwl wave=[ \
+        0 0  159.9e-9 0 \
+        160e-9 0.9  319.9e-9 0.9 \
+        320e-9 0  479.9e-9 0 \
+        480e-9 0.9  640e-9 0.9]
+
+Vdin1 (din1 0) vsource type=pwl wave=[ \
+        0 0  79.9e-9 0 \
+        80e-9 0.9  159.9e-9 0.9 \
+        160e-9 0  239.9e-9 0 \
+        240e-9 0.9  319.9e-9 0.9 \
+        320e-9 0  399.9e-9 0 \
+        400e-9 0.9  479.9e-9 0.9 \
+        480e-9 0  559.9e-9 0 \
+        560e-9 0.9  640e-9 0.9]
+
+Vdin0 (din0 0) vsource type=pwl wave=[ \
+        0 0  39.9e-9 0 \
+        40e-9 0.9  79.9e-9 0.9  80e-9 0 \
+        119.9e-9 0  120e-9 0.9  159.9e-9 0.9  160e-9 0 \
+        199.9e-9 0  200e-9 0.9  239.9e-9 0.9  240e-9 0 \
+        279.9e-9 0  280e-9 0.9  319.9e-9 0.9  320e-9 0 \
+        359.9e-9 0  360e-9 0.9  399.9e-9 0.9  400e-9 0 \
+        439.9e-9 0  440e-9 0.9  479.9e-9 0.9  480e-9 0 \
+        519.9e-9 0  520e-9 0.9  559.9e-9 0.9  560e-9 0 \
+        599.9e-9 0  600e-9 0.9  640e-9 0.9]
+
+// DUT (port order: DIN3 DIN2 DIN1 DIN0 RDY AOUT)
+IDUT (din3 din2 din1 din0 rdy aout) dac_binary_clk_4b vref=vdd vth=vth
+
+tran tran stop=660n maxstep=200p
+save rdy:2e din3:d din2:d din1:d din0:d aout:3f

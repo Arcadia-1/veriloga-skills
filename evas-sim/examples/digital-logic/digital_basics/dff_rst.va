@@ -1,0 +1,37 @@
+`include "disciplines.vams"
+`include "constants.vams"
+
+// D flip-flop with synchronous active-high reset.
+// Rising CLK edge: if RST=1 → Q=0; else Q=D.
+// Q and QB (Q-bar) are complementary outputs.
+module dff_rst(clk, d, rst, q, qbar);
+    input  clk, d, rst;
+    output q, qbar;
+    electrical clk, d, rst, q, qbar;
+
+    parameter real vth   = 0.4;    // VDD/2
+    parameter real vhigh = 0.8;
+
+    `default_transition 30p
+
+    integer q_bit;
+
+    analog begin
+        @(initial_step) begin
+            q_bit = 0;
+            $strobe("[dff_rst] INIT | vth=%.3gV | vhigh=%.3gV", vth, vhigh);
+        end
+
+        @(cross(V(clk) - vth, +1)) begin
+            if (V(rst) > vth)
+                q_bit = 0;
+            else
+                q_bit = (V(d) > vth) ? 1 : 0;
+            $strobe("[dff_rst] t=%.3f ns | CLK+ | rst=%d | d=%d | q=%d",
+                    $abstime*1e9, (V(rst)>vth)?1:0, (V(d)>vth)?1:0, q_bit);
+        end
+
+        V(q)    <+ transition( q_bit         * vhigh, 30p);
+        V(qbar) <+ transition((1 - q_bit)    * vhigh, 30p);
+    end
+endmodule

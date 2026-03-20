@@ -1,0 +1,100 @@
+[
+  {
+    "name": "adc_dac_ideal_4b",
+    "category": "data-converter",
+    "path": "evas-sim/examples/data-converter/adc_dac_ideal_4b",
+    "default_testbench": "tb_adc_dac_ideal_4b_ramp.scs",
+    "focus": "ideal 4-bit ADC/DAC chain with ramp and sine stimulus"
+  },
+  {
+    "name": "d2b_4b",
+    "category": "data-converter",
+    "path": "evas-sim/examples/data-converter/d2b_4b",
+    "default_testbench": "tb_d2b_4b.scs",
+    "focus": "4-bit analog-to-binary conversion"
+  },
+  {
+    "name": "dac_binary_clk_4b",
+    "category": "data-converter",
+    "path": "evas-sim/examples/data-converter/dac_binary_clk_4b",
+    "default_testbench": "tb_dac_binary_clk_4b.scs",
+    "focus": "clocked 4-bit binary DAC"
+  },
+  {
+    "name": "dac_therm_16b",
+    "category": "data-converter",
+    "path": "evas-sim/examples/data-converter/dac_therm_16b",
+    "default_testbench": "tb_dac_therm_16b.scs",
+    "focus": "16-bit thermometer DAC"
+  },
+  {
+    "name": "sar_adc_dac_weighted_8b",
+    "category": "data-converter",
+    "path": "evas-sim/examples/data-converter/sar_adc_dac_weighted_8b",
+    "default_testbench": "tb_sar_adc_dac_weighted_8b.scs",
+    "focus": "8-bit SAR ADC plus weighted DAC verification"
+  },
+  {
+    "name": "comparator",
+    "category": "comparator",
+    "path": "evas-sim/examples/comparator/comparator",
+    "default_testbench": "tb_cmp_ideal.scs",
+    "focus": "ideal, delay, offset-search, and strongarm comparator scenarios"
+  },
+  {
+    "name": "clk_div",
+    "category": "digital-logic",
+    "path": "evas-sim/examples/digital-logic/clk_div",
+    "default_testbench": "tb_clk_div.scs",
+    "focus": "clock divider verification"
+  },
+  {
+    "name": "digital_basics",
+    "category": "digital-logic",
+    "path": "evas-sim/examples/digital-logic/digital_basics",
+    "default_testbench": "tb_not_gate.scs",
+    "focus": "basic event-driven logic gates and DFF coverage"
+  },
+  {
+    "name": "lfsr",
+    "category": "digital-logic",
+    "path": "evas-sim/examples/digital-logic/lfsr",
+    "default_testbench": "tb_lfsr.scs",
+    "focus": "linear feedback shift register sequence generation"
+  },
+  {
+    "name": "dwa_ptr_gen",
+    "category": "calibration",
+    "path": "evas-sim/examples/calibration/dwa_ptr_gen",
+    "default_testbench": "tb_dwa_ptr_gen.scs",
+    "focus": "dynamic element matching pointer generation"
+  },
+  {
+    "name": "clk_burst_gen",
+    "category": "stimulus",
+    "path": "evas-sim/examples/stimulus/clk_burst_gen",
+    "default_testbench": "tb_clk_burst_gen.scs",
+    "focus": "burst-clock stimulus generation"
+  },
+  {
+    "name": "noise_gen",
+    "category": "stimulus",
+    "path": "evas-sim/examples/stimulus/noise_gen",
+    "default_testbench": "tb_noise_gen.scs",
+    "focus": "noise source generation"
+  },
+  {
+    "name": "ramp_gen",
+    "category": "stimulus",
+    "path": "evas-sim/examples/stimulus/ramp_gen",
+    "default_testbench": "tb_ramp_gen.scs",
+    "focus": "ramp stimulus generation"
+  },
+  {
+    "name": "gain_extraction",
+    "category": "measurement",
+    "path": "evas-sim/examples/measurement/gain_extraction",
+    "default_testbench": "tb_gain_extraction.scs",
+    "focus": "gain extraction and convergence measurement flow"
+  }
+]

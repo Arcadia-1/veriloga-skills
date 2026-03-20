@@ -1,0 +1,41 @@
+// dwa_ptr_gen: DWA pointer rotation generator
+// 100 MHz clock, single voltage source driving v2b_4b -> 4-bit code
+simulator lang=spectre
+global 0
+
+ahdl_include "v2b_4b.va"
+ahdl_include "dwa_ptr_gen.va"
+
+// Global clock: 100 MHz (T=10ns)
+Vclk (clk_i 0) vsource type=pulse val0=0 val1=0.9 period=10n delay=2n rise=0.5n fall=0.5n width=4.5n
+
+// Reset: deassert at 5ns (active-low)
+Vrst_n (rst_ni 0) vsource type=pwl wave=[0 0 4.9n 0 5n 0.9 200n 0.9]
+
+// Analog voltage source: 0-15V steps -> code sequence
+// codes = [3, 7, 2, 5, 1, 8, 4, 6, 3, 5, 2, 7, 1, 4, 8, 2]
+// Each code held for one clock period (10ns); voltage changes 2ns after rising edge
+Vvin (vin_node 0) vsource type=pwl \
+    wave=[0 3  13n 3  14n 7  23n 7  24n 2  33n 2  34n 5  43n 5  44n 1  53n 1 \
+          54n 8  63n 8  64n 4  73n 4  74n 6  83n 6  84n 3  93n 3  94n 5  103n 5 \
+          104n 2  113n 2  114n 7  123n 7  124n 1  133n 1  134n 4  143n 4 \
+          144n 8  153n 8  154n 2  200n 2]
+
+// v2b_4b: converts analog voltage to 4-bit code on CLK rising edge
+IV2B (clk_i vin_node code_3 code_2 code_1 code_0) v2b_4b vdd=0.9
+
+// DUT: dwa_ptr_gen
+IDUT (clk_i rst_ni \
+      code_3 code_2 code_1 code_0 \
+      cell_en_15 cell_en_14 cell_en_13 cell_en_12 cell_en_11 cell_en_10 cell_en_9 cell_en_8 \
+      cell_en_7 cell_en_6 cell_en_5 cell_en_4 cell_en_3 cell_en_2 cell_en_1 cell_en_0 \
+      ptr_15 ptr_14 ptr_13 ptr_12 ptr_11 ptr_10 ptr_9 ptr_8 \
+      ptr_7 ptr_6 ptr_5 ptr_4 ptr_3 ptr_2 ptr_1 ptr_0) \
+      dwa_ptr_gen vdd=0.9 vth=0.45 ptr_init=0
+
+tran tran stop=175n maxstep=0.1n
+save clk_i:2e rst_ni:d vin_node:6f \
+     cell_en_15:d cell_en_14:d cell_en_13:d cell_en_12:d cell_en_11:d cell_en_10:d cell_en_9:d cell_en_8:d \
+     cell_en_7:d cell_en_6:d cell_en_5:d cell_en_4:d cell_en_3:d cell_en_2:d cell_en_1:d cell_en_0:d \
+     ptr_15:d ptr_14:d ptr_13:d ptr_12:d ptr_11:d ptr_10:d ptr_9:d ptr_8:d \
+     ptr_7:d ptr_6:d ptr_5:d ptr_4:d ptr_3:d ptr_2:d ptr_1:d ptr_0:d

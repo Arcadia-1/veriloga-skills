@@ -1,0 +1,49 @@
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+// Ideal clocked comparator: instantaneous decision, no offset by default.
+module cmp_ideal (
+    input  electrical CLK,
+    input  electrical VINN,
+    input  electrical VINP,
+    output electrical DCMPN,
+    output electrical DCMPP,
+    output electrical LP,
+    output electrical LM,
+    inout  electrical VSS,
+    inout  electrical VDD
+);
+
+parameter real voffset = 0.0;
+
+real vdd;
+integer xoutp, xoutn;
+real tedge = 20p;
+
+analog begin
+    vdd = V(VDD);
+
+    @(cross(V(CLK) - vdd*0.5, +1)) begin
+        if (V(VINP) - V(VINN) - voffset > 0) begin
+            xoutp = 1;
+            xoutn = 0;
+        end else begin
+            xoutp = 0;
+            xoutn = 1;
+        end
+        $strobe("[cmp_ideal] t=%.3f ns | vinp=%.4fmV | vinn=%.4fmV | diff=%.4fmV | dec=%d",
+                $abstime*1e9, V(VINP)*1e3, V(VINN)*1e3, (V(VINP)-V(VINN))*1e3, xoutp);
+    end
+
+    @(cross(V(CLK) - vdd*0.5, -1)) begin
+        xoutp = 0;
+        xoutn = 0;
+    end
+
+    V(DCMPP) <+ transition(vdd * xoutp, 0, tedge, tedge);
+    V(DCMPN) <+ transition(vdd * xoutn, 0, tedge, tedge);
+
+end
+
+endmodule

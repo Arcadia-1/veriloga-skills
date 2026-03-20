@@ -80,4 +80,4 @@ architectural exclusions** — EVAS will never add KCL solving.
 
 What may change:
 1. New `[supported]` constructs → update manifest
-2. CLI stabilization → update `voltage_simulator_cmd` in `customize.md`, set `evas_status: ready`
+2. CLI/runtime changes → update `voltage_simulator_cmd` and related examples in `customize.md`

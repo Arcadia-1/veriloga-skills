@@ -1,0 +1,25 @@
+// ramp_gen: 12-bit ramp code generator (up-ramp from 0 to 15)
+simulator lang=spectre
+global 0
+
+ahdl_include "ramp_gen.va"
+
+// Clock: 100ns period
+Vclk (clk_dtc 0) vsource type=pulse val0=0 val1=0.9 period=100n delay=5n rise=1n fall=1n width=48n
+
+// Reset: deassert at 20ns (active-low)
+Vrst_n (rst_n 0) vsource type=pwl \
+        wave=[0 0 19n 0 20n 0.9 3000n 0.9]
+
+// DUT: 12-bit ramp, up from 0 to 127, step=1, start after 2 cycles
+// code[11:0] MSB-first: code_11 code_10 ... code_0
+IDUT (clk_dtc rst_n \
+      code_11 code_10 code_9 code_8 code_7 code_6 code_5 code_4 \
+      code_3 code_2 code_1 code_0) \
+      ramp_gen DIRECTION=1 MIN_CODE=0 MAX_CODE=127 STEP_SIZE=1 \
+      N_CYCLE_START=2 UPDATE_DIV=1 vh=0.9 vl=0.0 vth=0.45
+
+tran tran stop=15000n maxstep=1n
+save clk_dtc:2e rst_n:d \
+     code_11:d code_10:d code_9:d code_8:d code_7:d code_6:d code_5:d code_4:d \
+     code_3:d code_2:d code_1:d code_0:d

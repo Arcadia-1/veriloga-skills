@@ -1,0 +1,24 @@
+// tb_inverter_chain.scs — 4-stage inverter chain
+//
+// Each stage: td=100ps, tr=50ps
+// Total propagation delay: 4 x 100ps = 400ps
+//
+// Polarity at each node (0 = same as IN, 1 = inverted):
+//   in  → IINV1 → n1(inv) → IINV2 → n2(same) → IINV3 → n3(inv) → IINV4 → out(same)
+//
+// Input: square wave, period=4ns, rising edges at 1ns, 5ns, 9ns
+simulator lang=spectre
+global 0
+
+ahdl_include "inverter.va"
+
+VIN (in 0) vsource type=pulse val0=0 val1=0.8 \
+           period=4n width=2n delay=1n rise=30p fall=30p
+
+IINV1 (in  n1)  inverter td=100p tr=50p
+IINV2 (n1  n2)  inverter td=100p tr=50p
+IINV3 (n2  n3)  inverter td=100p tr=50p
+IINV4 (n3  out) inverter td=100p tr=50p
+
+tran tran stop=12n maxstep=50p
+save in:2e n1:2e n2:2e n3:2e out:2e

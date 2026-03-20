@@ -1,0 +1,51 @@
+// VerilogA for RISCAv4_zzs, LB_LFSR, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define N_lfsr 31
+`default_transition 10p
+
+module lfsr(DPN, VDD, VSS, CLK, EN, RSTB);
+output DPN;
+electrical DPN;
+inout VDD;
+electrical VDD;
+inout VSS;
+electrical VSS;
+input CLK;
+electrical CLK;
+input EN;
+electrical EN;
+input RSTB;
+electrical RSTB;
+
+parameter integer seed = 123;
+real vtrans_clk = 0.5;
+integer lfsr_r[`N_lfsr:0];
+integer tmp_lfsr_r[(`N_lfsr+1):0];
+integer i;
+
+analog begin
+	@ (initial_step or cross(V(RSTB)-vtrans_clk,-1)) begin
+		for (i=0;i<=`N_lfsr;i=i+1) begin lfsr_r[i]=seed>>i&1;end
+		for (i=0;i<=`N_lfsr;i=i+5) begin lfsr_r[i]=1;end
+		$strobe("[lfsr] t=%.3f ns | INIT/RST | seed=%d | DPN=%d", $abstime*1e9, seed, lfsr_r[`N_lfsr]);
+	end
+
+	@ (cross(V(CLK)-vtrans_clk,+1)) begin
+		if (V(RSTB) > vtrans_clk) begin
+			for (i=0;i<=`N_lfsr;i=i+1) begin tmp_lfsr_r[i+1]=lfsr_r[i];end
+
+			tmp_lfsr_r[0] = lfsr_r[31]^lfsr_r[21]^lfsr_r[1]^lfsr_r[0]; //`N_lfsr=31
+
+			for (i=0;i<=`N_lfsr;i=i+1) begin lfsr_r[i] = tmp_lfsr_r[i];end
+			$strobe("[lfsr] t=%.3f ns | DPN=%d", $abstime*1e9, lfsr_r[`N_lfsr]);
+		end
+	end
+
+	V(DPN) <+ transition(lfsr_r[`N_lfsr]>0? V(VDD):V(VSS), 50p);
+
+end
+
+endmodule

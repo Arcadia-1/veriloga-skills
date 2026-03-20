@@ -494,8 +494,9 @@ Local cache: `references/evas-capabilities.manifest`.
 Delegate to `openvaf` skill: compile check → load check → tran sanity.
 
 ### Voltage-domain
-EVAS in development (`evas_status` in `customize.md`). While unavailable:
-static check against `evas-capabilities.manifest` only.
+Use EVAS for local simulation when the CLI is installed/configured.
+If EVAS is unavailable in the current environment, fall back to a static
+compatibility check against `evas-capabilities.manifest`.
 
 ### Mixed-domain
 Do not attempt. Refer to `domain-routing.md § Mixed`.
