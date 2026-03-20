@@ -26,6 +26,7 @@ parameter real vth = 0.45;
 real weight[`NUM_BITS:1];   // weight[8]=MSB, weight[1]=LSB
 real total_sum;
 real vout_val;
+integer init_i;
 genvar i;
 
 analog begin
@@ -34,8 +35,8 @@ analog begin
         weight[4] = 8;   weight[3] = 4;  weight[2] = 2;  weight[1] = 1;
 
         total_sum = 0;
-        for (i = `NUM_BITS; i >= 1; i = i - 1)
-            total_sum = total_sum + weight[i];
+        for (init_i = `NUM_BITS; init_i >= 1; init_i = init_i - 1)
+            total_sum = total_sum + weight[init_i];
 
         vout_val = 0;
         $strobe("[dac_weighted_8b] INIT | vdd=%.3gV | total_sum=%g", vdd, total_sum);

@@ -33,6 +33,7 @@ real weight[`NUM_BITS:1];   // weight[8]=MSB, weight[1]=LSB
 real total_sum;
 real vsampled, vdac_partial;
 integer dout_bits[`NUM_BITS:1];
+integer bit_i;
 genvar i;
 
 analog begin
@@ -41,11 +42,11 @@ analog begin
         weight[4] = 8;   weight[3] = 4;  weight[2] = 2;  weight[1] = 1;
 
         total_sum = 0;
-        for (i = `NUM_BITS; i >= 1; i = i - 1)
-            total_sum = total_sum + weight[i];
+        for (bit_i = `NUM_BITS; bit_i >= 1; bit_i = bit_i - 1)
+            total_sum = total_sum + weight[bit_i];
 
-        for (i = `NUM_BITS; i >= 1; i = i - 1)
-            dout_bits[i] = 0;
+        for (bit_i = `NUM_BITS; bit_i >= 1; bit_i = bit_i - 1)
+            dout_bits[bit_i] = 0;
 
         $strobe("[sar_adc_weighted_8b] INIT | vdd=%.3gV | total_sum=%g", vdd, total_sum);
     end
@@ -58,17 +59,17 @@ analog begin
     @(cross(V(CLKS) - vth, +1)) begin
         if (V(RST_N) < vth) begin
             // Synchronous reset: clear all output bits
-            for (i = `NUM_BITS; i >= 1; i = i - 1)
-                dout_bits[i] = 0;
+            for (bit_i = `NUM_BITS; bit_i >= 1; bit_i = bit_i - 1)
+                dout_bits[bit_i] = 0;
         end else begin
             // SAR successive-approximation
             vdac_partial = 0.0;
-            for (i = `NUM_BITS; i >= 1; i = i - 1) begin
-                if ((vdac_partial + weight[i]) / total_sum * vdd <= vsampled) begin
-                    dout_bits[i] = 1;
-                    vdac_partial = vdac_partial + weight[i];
+            for (bit_i = `NUM_BITS; bit_i >= 1; bit_i = bit_i - 1) begin
+                if ((vdac_partial + weight[bit_i]) / total_sum * vdd <= vsampled) begin
+                    dout_bits[bit_i] = 1;
+                    vdac_partial = vdac_partial + weight[bit_i];
                 end else begin
-                    dout_bits[i] = 0;
+                    dout_bits[bit_i] = 0;
                 end
             end
             $strobe("[sar_adc_weighted_8b] t=%.3f ns | vin=%.5gV | code=%d%d%d%d%d%d%d%d",

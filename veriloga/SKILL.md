@@ -93,6 +93,19 @@ If the request matches a common DUT category, stay within the core set unless it
 
 Violating any rule causes simulator errors or silently wrong results.
 
+### Header Requirement: Always include the standard Verilog-A headers
+
+For portable Spectre/Virtuoso-ready Verilog-A, start every `.va` file with:
+
+```verilog
+`include "constants.vams"
+`include "disciplines.vams"
+```
+
+`electrical` comes from `disciplines.vams`. If that include is missing, Spectre may report a
+misleading syntax error near the first `electrical` declaration even though the real problem is the
+missing header.
+
 ### Rule 1: All signals use `electrical` type
 
 No `wire`, `logic`, or `reg`. Spectre accepts two port styles:
@@ -214,18 +227,24 @@ module example (input electrical clk_i, output electrical [3:0] dout_o);
 endmodule
 ```
 
-### Rule 5: Loop variables use `genvar`
+### Rule 5: Be strict about `integer` vs `genvar`
 
-Loop indices must use `genvar`, **not** `integer`. Integer loop indices cause elaboration
-errors in most simulators.
+This is a major Spectre portability pitfall.
 
-**Correct — genvar in @event block (runtime loop):**
+- Use `integer` for procedural/runtime loops inside `@(initial_step)`, `@(cross(...))`, and other
+  event blocks that update variables or arrays.
+- Use `genvar` for contribution/elaboration-style loops that stamp repeated analog contributions such
+  as `V(out[k]) <+ ...` or `I(branch[k]) <+ ...`.
+- Do **not** use an `integer` loop variable to index an electrical bus in expressions like
+  `V(code_i[k])` or `I(bus[k])` inside procedural code; Spectre often rejects this. Unroll the bus
+  access explicitly or restructure the code.
+
+**Correct - `integer` for runtime/procedural loops:**
 ```verilog
-genvar i;
+integer i;
 
 analog begin
     @(initial_step or cross(V(CLKS)-vdd/2, +1)) begin
-        $strobe("[reset]");
         for (i = `NUM_ADC_BITS; i >= 1; i = i - 1) begin
             dout[i] = 0;
         end
@@ -233,12 +252,11 @@ analog begin
 end
 ```
 
-**Correct — genvar in bare block (compile-time expansion):**
+**Correct - `genvar` for repeated analog contributions:**
 ```verilog
 genvar k;
 
 analog begin
-    // These assignments are compile-time expanded
     for (k = 0; k < N_BIT; k = k + 1) begin
         if ((code >> k) & 1)
             V(DOUT_o[k]) <+ transition(V(VDD), 0, tedge);
@@ -248,15 +266,29 @@ analog begin
 end
 ```
 
-**Wrong — integer loop index:**
+**Wrong - `integer` indexing an electrical bus in procedural code:**
 ```verilog
-integer i;  // Declared at module level (OK)
+integer k;
 
 analog begin
-    @(initial_step) begin
-        for (i = 0; i < 10; i = i + 1) begin  // ERROR: loop uses integer
-            code[i] = 0;
+    @(cross(V(clk_i) - vth, +1)) begin
+        for (k = 0; k < 4; k = k + 1) begin
+            if (V(code_i[k]) > vth)
+                code = code + (1 << k);
         end
+    end
+end
+```
+
+**Safer rewrite - explicitly unroll electrical-bus reads:**
+```verilog
+analog begin
+    @(cross(V(clk_i) - vth, +1)) begin
+        code = 0;
+        if (V(code_i[0]) > vth) code = code + 1;
+        if (V(code_i[1]) > vth) code = code + 2;
+        if (V(code_i[2]) > vth) code = code + 4;
+        if (V(code_i[3]) > vth) code = code + 8;
     end
 end
 ```

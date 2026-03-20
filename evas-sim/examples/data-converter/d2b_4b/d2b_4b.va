@@ -1,3 +1,6 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
 module d2b_4b (bin_o, bin_n_o, onehot_o, onehot_n_o, therm_o, therm_n_o);
 
 output [3:0]  bin_o;
@@ -25,25 +28,26 @@ integer onehot_n_bits[15:0];
 integer therm_bits[14:0];
 integer therm_n_bits[14:0];
 integer n;
+integer init_k;
 genvar  k;
 
 analog begin
     @(initial_step) begin
         n = (trim_code < 0) ? 0 : ((trim_code > 15) ? 15 : trim_code);
 
-        for (k = 0; k < 4; k = k + 1) begin
-            bin_bits[k]   = (n >> k) & 1;
-            bin_n_bits[k] = 1 - bin_bits[k];
+        for (init_k = 0; init_k < 4; init_k = init_k + 1) begin
+            bin_bits[init_k]   = (n >> init_k) & 1;
+            bin_n_bits[init_k] = 1 - bin_bits[init_k];
         end
 
-        for (k = 0; k < 16; k = k + 1) begin
-            onehot_bits[k]   = (k == n) ? 1 : 0;
-            onehot_n_bits[k] = (k == n) ? 0 : 1;
+        for (init_k = 0; init_k < 16; init_k = init_k + 1) begin
+            onehot_bits[init_k]   = (init_k == n) ? 1 : 0;
+            onehot_n_bits[init_k] = (init_k == n) ? 0 : 1;
         end
 
-        for (k = 0; k < 15; k = k + 1) begin
-            therm_bits[k]   = (k < n) ? 1 : 0;
-            therm_n_bits[k] = (k < n) ? 0 : 1;
+        for (init_k = 0; init_k < 15; init_k = init_k + 1) begin
+            therm_bits[init_k]   = (init_k < n) ? 1 : 0;
+            therm_n_bits[init_k] = (init_k < n) ? 0 : 1;
         end
 
         $strobe("[d2b_4b] INIT | trim_code=%d | n=%d | bin[3:0]=%d%d%d%d | onehot[15:0]=%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d | therm[14:0]=%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d",
