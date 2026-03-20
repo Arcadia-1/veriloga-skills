@@ -1,0 +1,33 @@
+{
+  "id": "sar_logic",
+  "family": "spec-to-va",
+  "category": "adc-sar",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "@(cross(",
+    "electrical",
+    "genvar",
+    "transition("
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 1,
+  "source_name": "eval-sar-logic",
+  "expected_output_summary": "A complete .va file with proper port declarations, genvar loops, @(initial_step), cross() events for clock edges, bit-cycling state machine, and transition() outputs using supply voltages.",
+  "source_files": []
+}

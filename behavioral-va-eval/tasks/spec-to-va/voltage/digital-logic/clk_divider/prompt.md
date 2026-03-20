@@ -1,0 +1,1 @@
+Write a programmable clock divider. 8-bit division ratio (1-255). 50% output duty cycle regardless of division ratio. Synchronous reset. Include a LOCK output that goes high after the first full output period.

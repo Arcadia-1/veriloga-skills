@@ -1,0 +1,32 @@
+// cmp_offset_search: Binary search for comparator offset using cmp_strongarm feedback
+// 12 clock cycles, 10 binary search steps
+simulator lang=spectre
+global 0
+
+ahdl_include "cmp_offset_search.va"
+ahdl_include "cmp_strongarm.va"
+
+// Supply rails
+Vvdd (vdd 0) vsource type=dc dc=0.8
+Vvss (vss 0) vsource type=dc dc=0
+
+// Search clock: 200ns period -> 5 MHz
+Vclk (CLK 0) vsource type=pulse val0=0 val1=0.8 period=200n delay=10n rise=2n fall=2n width=98n
+
+// Common-mode voltage at vdd/2 = 0.4V
+Vvincm (vincm 0) vsource type=dc dc=0.4
+
+// Dummy LP/LM loads (not used by search logic)
+Vlp (lp 0) vsource type=dc dc=0
+Vlm (lm 0) vsource type=dc dc=0
+
+// cmp_offset_search drives VINP and VINN; XCMP provides DCMPP feedback
+// cmp_offset_search ports: CLK DCMPP VINCM VINP VINN
+// cmp_strongarm ports: CLK VINN VINP DCMPN DCMPP LP LM VSS VDD
+ISEARCH (CLK dcmpp vincm vinp_node vinn_node) cmp_offset_search vdd=0.8
+
+ICMP (CLK vinn_node vinp_node dcmpn dcmpp lp lm vss vdd) cmp_strongarm \
+        voffset=10m
+
+tran tran stop=2400n maxstep=1n
+save CLK:2e vincm:6f vinp_node:6f vinn_node:6f dcmpp:2e dcmpn:2e

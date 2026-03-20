@@ -1,0 +1,67 @@
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+// Comparator with log-linear regeneration delay: td = td_0 + tau * ln(VDD / |Vdiff_eff|)
+// Physical model: output grows as Vout(t) = Vdiff * exp(t/tau), resolves when Vout = VDD.
+// Calibrated: vin=10mV → td≈40ps, vin=1mV → td≈50ps  (tau=4.34ps, td_0=20.5ps)
+module cmp_delay (
+    input  electrical CLK,
+    input  electrical VINN,
+    input  electrical VINP,
+    output electrical DCMPN,
+    output electrical DCMPP,
+    output electrical LP,
+    output electrical LM,
+    inout  electrical VSS,
+    inout  electrical VDD
+);
+
+parameter real voffset = 0.0;
+parameter real tau     = 4.34e-12;   // regeneration time constant [s]
+parameter real td_0    = 20.5e-12;   // base delay offset [s]
+parameter real td_min  = 20e-12;     // minimum delay floor [s]
+parameter real td_max  = 200e-12;    // maximum delay ceiling [s]
+
+real vdd;
+integer xoutp, xoutn;
+real tedge = 30p;
+real td;
+real vdiff_eff;
+
+analog begin
+    vdd = V(VDD);
+
+    @(initial_step)
+        td = td_min;
+
+    @(cross(V(CLK) - vdd*0.5, +1)) begin
+        vdiff_eff = V(VINP) - V(VINN) - voffset;
+        if (vdiff_eff < 0) vdiff_eff = -vdiff_eff;
+        if (vdiff_eff < 1e-9) vdiff_eff = 1e-9;  // floor at 1nV to avoid ln(0)
+        td = td_0 + tau * ln(vdd / vdiff_eff);
+        if (td < td_min) td = td_min;
+        if (td > td_max) td = td_max;
+
+        if (V(VINP) - V(VINN) - voffset > 0) begin
+            xoutp = 1;
+            xoutn = 0;
+        end else begin
+            xoutp = 0;
+            xoutn = 1;
+        end
+        $strobe("[cmp_delay] t=%.3f ns | diff=%.5fmV | td=%.1f ps | dec=%d",
+                $abstime*1e9, (V(VINP)-V(VINN))*1e3, td*1e12, xoutp);
+    end
+
+    @(cross(V(CLK) - vdd*0.5, -1)) begin
+        xoutp = 0;
+        xoutn = 0;
+    end
+
+    V(DCMPP) <+ transition(vdd * xoutp, td, tedge, tedge);
+    V(DCMPN) <+ transition(vdd * xoutn, td, tedge, tedge);
+
+end
+
+endmodule

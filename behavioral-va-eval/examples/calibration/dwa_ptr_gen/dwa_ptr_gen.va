@@ -1,0 +1,83 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 10p
+
+// DWA (Data Weighted Averaging) pointer rotation generator.
+// On each rising edge of clk_i, reads code_msb_i (0-15) and advances
+// the 16-element circular pointer by that amount. Outputs two 16-bit masks:
+//   cell_en_o : activated cells — MSB span + LSB unit (active high)
+//   ptr_o     : pointer position — active-high one-hot
+
+module dwa_ptr_gen (
+    input  electrical        clk_i,
+    input  electrical        rst_ni,
+    input  electrical [3:0]  code_msb_i,
+    output electrical [15:0] cell_en_o,
+    output electrical [15:0] ptr_o
+);
+
+parameter real    vdd      = 0.9;
+parameter real    vth      = 0.45;
+parameter integer ptr_init = 0;   // pointer reset value (0-15)
+
+integer start_idx_q;
+integer msb_count_q;
+integer lsb_idx;
+integer dist;
+integer j, k;
+genvar  i;
+
+real cell_en_val[15:0];
+real ptr_val[15:0];
+
+analog begin
+    @(initial_step) begin
+        start_idx_q = ptr_init;
+        msb_count_q = 0;
+        for (j = 0; j < 16; j = j + 1) begin
+            cell_en_val[j] = 0.0;
+            ptr_val[j] = 0.0;
+        end
+    end
+
+    @(cross(V(clk_i) - vth, +1)) begin
+        if (V(rst_ni) < vth) begin
+            start_idx_q = ptr_init;
+            msb_count_q = 0;
+        end else begin
+            // Sample MSB code
+            msb_count_q = 0;
+            for (k = 0; k < 4; k = k + 1)
+                if (V(code_msb_i[k]) > vth) msb_count_q = msb_count_q + (1 << k);
+
+            // Advance pointer by msb_count (DWA rotation)
+            start_idx_q = (start_idx_q + msb_count_q) % 16;
+        end
+
+        // Compute output masks
+        lsb_idx = (start_idx_q - msb_count_q + 16) % 16;
+        for (j = 0; j < 16; j = j + 1) begin
+            dist = (start_idx_q - j + 16) % 16;
+            cell_en_val[j] = ((dist < msb_count_q) || (j == lsb_idx)) ? vdd : 0.0;
+            ptr_val[j] = (j == start_idx_q) ? vdd : 0.0;
+        end
+        $strobe("[dwa_ptr_gen] t=%.3f ns | ptr=%2d | msb=%2d | lsb=%2d | cell=%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d | ptr_bits=%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d%0d",
+            $abstime*1e9, start_idx_q, msb_count_q, lsb_idx,
+            (cell_en_val[15]>vth?1:0),(cell_en_val[14]>vth?1:0),(cell_en_val[13]>vth?1:0),(cell_en_val[12]>vth?1:0),
+            (cell_en_val[11]>vth?1:0),(cell_en_val[10]>vth?1:0),(cell_en_val[9]>vth?1:0),(cell_en_val[8]>vth?1:0),
+            (cell_en_val[7]>vth?1:0),(cell_en_val[6]>vth?1:0),(cell_en_val[5]>vth?1:0),(cell_en_val[4]>vth?1:0),
+            (cell_en_val[3]>vth?1:0),(cell_en_val[2]>vth?1:0),(cell_en_val[1]>vth?1:0),(cell_en_val[0]>vth?1:0),
+            (ptr_val[15]>vth?1:0),(ptr_val[14]>vth?1:0),(ptr_val[13]>vth?1:0),(ptr_val[12]>vth?1:0),
+            (ptr_val[11]>vth?1:0),(ptr_val[10]>vth?1:0),(ptr_val[9]>vth?1:0),(ptr_val[8]>vth?1:0),
+            (ptr_val[7]>vth?1:0),(ptr_val[6]>vth?1:0),(ptr_val[5]>vth?1:0),(ptr_val[4]>vth?1:0),
+            (ptr_val[3]>vth?1:0),(ptr_val[2]>vth?1:0),(ptr_val[1]>vth?1:0),(ptr_val[0]>vth?1:0));
+    end
+
+    for (i = 0; i < 16; i = i + 1) begin
+        V(cell_en_o[i]) <+ transition(cell_en_val[i]);
+        V(ptr_o[i])     <+ transition(ptr_val[i]);
+    end
+end
+
+endmodule

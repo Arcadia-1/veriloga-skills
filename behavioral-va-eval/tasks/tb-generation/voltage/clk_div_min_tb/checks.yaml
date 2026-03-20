@@ -1,0 +1,15 @@
+syntax:
+  ordered_sections:
+    - "sources"
+    - "instance"
+    - "analysis"
+    - "save"
+    - "ahdl_include"
+  must_include:
+    - "simulator lang=spectre"
+    - "tran"
+    - "save"
+routing:
+  expected_backend: "evas"
+simulation:
+  mode: "must_parse"

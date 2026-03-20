@@ -1,0 +1,13 @@
+{
+  "id": "comparator_smoke",
+  "family": "end-to-end",
+  "category": "comparator",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": ["transition(", "V("],
+  "must_not_include": ["I(", "ddt("],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut.va", "tb_cmp.scs", "tran.csv"],
+  "scoring": ["dut_compile", "tb_compile", "sim_correct"]
+}

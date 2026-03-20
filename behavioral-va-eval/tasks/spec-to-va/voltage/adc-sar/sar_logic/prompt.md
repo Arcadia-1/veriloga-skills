@@ -1,0 +1,1 @@
+Write a Verilog-A 10-bit SAR ADC logic block. It should take a comparator output (DCOMP) and a sample clock (CLKS), and generate 10 DAC control bits (DP_DAC[9:0]) plus a ready flag (RDY). Use rising edge of an internal bit-clock derived from CLKS. Include VDD and VSS as power ports.

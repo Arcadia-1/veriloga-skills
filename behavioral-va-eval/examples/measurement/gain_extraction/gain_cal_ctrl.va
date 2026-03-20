@@ -1,0 +1,98 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// Digital gain calibration controller.
+//
+// Cross-correlation gain estimator:
+//   sign_d  = +1 if DPN > vth, else -1
+//   sum    += V(VAMP_P,VAMP_N) * sign_d   (each CLK cycle)
+//   After N_BATCH samples:
+//     A_est = sum / (N_BATCH * DITHER_AMP)
+//
+// Control code update:
+//   cfg_gain_old = GAIN_MIN + ctrl_code * (GAIN_MAX-GAIN_MIN)/255
+//   cfg_gain_new = GAIN_NOM * cfg_gain_old / A_est
+//   new_code     = round( (cfg_gain_new - GAIN_MIN)*255/(GAIN_MAX-GAIN_MIN) )
+//
+// DITHER_AMP and GAIN_* must match dither_adder and gain_amp parameters.
+
+module gain_cal_ctrl(
+    input  electrical        CLK,
+    input  electrical        RST_N,
+    input  electrical        VAMP_P,
+    input  electrical        VAMP_N,
+    input  electrical        VRES_P,
+    input  electrical        VRES_N,
+    input  electrical        DPN,
+    output electrical [7:0]  CTRL
+);
+
+parameter real    vdd        = 0.9;
+parameter real    vth        = 0.45;
+parameter integer N_BATCH    = 2000;
+parameter real    DITHER_AMP = 0.014063;
+parameter real    GAIN_NOM   = 8.0;
+parameter real    GAIN_MIN   = 7.2;
+parameter real    GAIN_MAX   = 8.8;
+
+integer ctrl_code;
+integer sample_cnt;
+integer calibrated;
+real    sum_vamp_d;
+real    sign_d, A_est, cfg_gain_old, cfg_gain_new;
+integer new_code;
+genvar  k;
+
+analog begin
+    @(initial_step) begin
+        ctrl_code  = 128;
+        sample_cnt = 0;
+        calibrated = 0;
+        sum_vamp_d = 0.0;
+        $strobe("[gain_cal_ctrl] INIT | N_BATCH=%d | DITHER_AMP=%.4fmV | ctrl_code=%d",
+                N_BATCH, DITHER_AMP*1e3, ctrl_code);
+    end
+
+    @(cross(V(CLK) - vth, +1)) begin
+        if (V(RST_N) < vth) begin
+            ctrl_code  = 128;
+            sample_cnt = 0;
+            calibrated = 0;
+            sum_vamp_d = 0.0;
+        end else if (!calibrated) begin
+            sign_d     = (V(DPN) > vth) ? 1.0 : -1.0;
+            sum_vamp_d = sum_vamp_d + V(VAMP_P, VAMP_N) * sign_d;
+            sample_cnt = sample_cnt + 1;
+
+            if (sample_cnt >= N_BATCH) begin
+                A_est        = sum_vamp_d / (N_BATCH * DITHER_AMP);
+                cfg_gain_old = GAIN_MIN + ctrl_code * (GAIN_MAX - GAIN_MIN) / 255.0;
+                cfg_gain_new = GAIN_NOM * cfg_gain_old / A_est;
+                new_code = floor(0.5 + (cfg_gain_new - GAIN_MIN) * 255.0
+                                        / (GAIN_MAX - GAIN_MIN));
+                if (new_code <   0) new_code = 0;
+                if (new_code > 255) new_code = 255;
+
+                $strobe("[gain_cal_ctrl] t=%.3fus | A_est=%.5f | cfg: %.4f->%.4f | code: %d->%d",
+                        $abstime*1e6, A_est, cfg_gain_old, cfg_gain_new,
+                        ctrl_code, new_code);
+
+                ctrl_code  = new_code;
+                calibrated = 1;
+                sum_vamp_d = 0.0;
+                sample_cnt = 0;
+            end
+        end
+    end
+
+    // Drive CTRL[7:0]
+    for (k = 0; k < 8; k = k + 1) begin
+        if ((ctrl_code >> k) & 1)
+            V(CTRL[k]) <+ transition(vdd, 0);
+        else
+            V(CTRL[k]) <+ transition(0.0, 0);
+    end
+end
+
+endmodule

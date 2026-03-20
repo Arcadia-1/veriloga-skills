@@ -1,0 +1,65 @@
+// gain_extraction: convergence simulation (2^18 = 262144 samples).
+//
+// This testbench is used for gain estimation convergence analysis.
+// LFSR_SEED and VIN_SEED are patched per-run by analyze_gain_extraction.py.
+//
+// Speed optimizations vs tb_gain_extraction.scs:
+//   - CLK rise/fall = 0.1 ns  (vs 1 ns) -> fewer transition sub-steps
+//   - maxstep = 9 n            -> ~4 steps/cycle instead of 28
+//   - save: clk only           -> minimal CSV I/O
+//
+// 2^18 * 20 ns = 5.24 ms;  stop = 5.5 ms
+
+simulator lang=spectre
+global 0
+
+ahdl_include "vin_src.va"
+ahdl_include "lfsr.va"
+ahdl_include "dither_adder.va"
+ahdl_include "gain_amp_fixed.va"
+ahdl_include "gain_estimator.va"
+
+parameters vdd=0.9 GAIN_NOM=8.0 GAIN_ERR=0.08 fs=50e6 fin=300e3
+parameters ACTUAL_GAIN=8.64
+parameters DITHER_AMP=0.014063
+parameters VIN_NOISE=0.01
+parameters LFSR_SEED=42
+parameters VIN_SEED=0
+
+// -- Supplies ------------------------------------------------------------------
+Vvdd (vdd 0) vsource dc=vdd
+Vvss (vss 0) vsource dc=0
+
+// -- Clock: 50 MHz, fast rise/fall to minimise sub-step count -----------------
+Vclk (clk 0) vsource type=pulse val0=0 val1=vdd period=20n delay=5n \
+             rise=0.1n fall=0.1n width=10n
+
+// -- Reset: deassert after 40 ns -----------------------------------------------
+Vrst_n (rst_n 0) vsource type=pwl wave=[0 0  39.5n 0  40n vdd  6m vdd]
+
+// -- LFSR enable ---------------------------------------------------------------
+Ven (en 0) vsource dc=vdd
+
+// -- Clocked noisy sine input --------------------------------------------------
+IVIN (clk rst_n vinp vinn) vin_src \
+     vdd=vdd vth=0.45 ampl=0.02 freq=fin sigma=VIN_NOISE seed=VIN_SEED
+
+// -- LFSR ----------------------------------------------------------------------
+ILFSR (dpn vdd vss clk en rst_n) lfsr seed=LFSR_SEED
+
+// -- Dither adder --------------------------------------------------------------
+IDITH (vinp vinn dpn vdin_p vdin_n) dither_adder \
+      vdd=vdd vth=0.45 DITHER_AMP=DITHER_AMP
+
+// -- Fixed-gain amplifier ------------------------------------------------------
+IAMP (vdin_p vdin_n vamp_p vamp_n) gain_amp_fixed \
+     vdd=vdd ACTUAL_GAIN=ACTUAL_GAIN
+
+// -- Gain estimator: strobe at N = 2^8, 2^9, ..., 2^18 ------------------------
+IEST (clk rst_n vamp_p vamp_n dpn) gain_estimator \
+     vth=0.45 N_TOTAL=262144 DITHER_AMP=DITHER_AMP
+
+// -- Simulation ----------------------------------------------------------------
+tran tran stop=5.5m maxstep=9n
+
+save clk:2e

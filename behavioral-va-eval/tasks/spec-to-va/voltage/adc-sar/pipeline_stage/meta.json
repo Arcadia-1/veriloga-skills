@@ -1,0 +1,30 @@
+{
+  "id": "pipeline_stage",
+  "family": "spec-to-va",
+  "category": "adc-sar",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 5,
+  "source_name": "eval-pipeline-stage",
+  "expected_output_summary": "A .va file modeling MDAC with two comparators, residue amplifier with gain-of-2, 2-bit thermometer output, sample-hold on clock phase.",
+  "source_files": []
+}

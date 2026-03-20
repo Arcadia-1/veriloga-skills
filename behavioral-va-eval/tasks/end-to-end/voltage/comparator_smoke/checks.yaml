@@ -1,0 +1,10 @@
+syntax:
+  must_include:
+    - "transition("
+dut_compile:
+  backend: "evas"
+tb_compile:
+  backend: "evas"
+sim_correct:
+  checks:
+    - "output_flips_with_input_order"

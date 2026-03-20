@@ -23,18 +23,24 @@ real-world .va files plus a 171-module reference library (14,311 LOC).
 2. **Apply all mandatory rules** below
 3. **Start from template** `assets/template.va`
 4. **Classify domain** → scan code for voltage vs current constructs (see Domain Classification)
-5. **Verify** (optional) → smoke test on the appropriate simulator (see Smoke Test)
+5. **Verify** (optional) → hand off testbench/simulation to the verification stack (see Smoke Test)
 6. **Explain usage** → list every port (direction, what to connect) and key parameters
 
-**Need guidance? Search these resources:**
+**Reference policy:**
+
+- Start with the curated core DUT examples only
+- Open `assets/examples-archive/` only if the core set does not cover the module
+- Treat `signal-source/` and `measurement-helpers/` as supplemental, not default references
+
+**Need guidance? Search these resources in this order:**
 
 - **Category-specific patterns** → `references/categories/adc-sar.md`, `comparator.md`, etc.
 - **Project overrides** (naming, supply voltage, headers) → `references/customize.md`
 - **Domain classification help** → `references/domain-routing.md`
 - **EVAS simulator support check** → `references/evas-capabilities.manifest`
-- **ADC behavioral verification** → `references/adc-testbench-guide.md` + `assets/examples/adc-verification/`
+- **ADC behavioral verification** → `references/adc-testbench-guide.md` (runnable examples live under `../behavioral-va-eval/examples/`)
 - **Advanced syntax** (string parsing, current-domain functions, conditional compilation) → `references/verilog-a-advanced.md`
-- **Working examples** → `assets/examples/`
+- **Working examples** → core DUT examples first; `assets/examples-archive/` only as fallback
 
 ---
 
@@ -48,8 +54,8 @@ real-world .va files plus a 171-module reference library (14,311 LOC).
 | "What naming convention should I use?" | `references/customize.md` | Project-specific overrides for ports, parameters, file headers |
 | "Is my module voltage-domain or current-domain?" | `references/domain-routing.md` | Classification guide + mixed-domain splitting strategies |
 | "Can EVAS simulate my voltage-domain module?" | `references/evas-capabilities.manifest` | Check EVAS supported constructs |
-| "How do I verify my ADC behavioral model?" | `references/adc-testbench-guide.md` | Full adctoolbox workflow with coherent sampling + spectral analysis |
-| "Show me working examples" | `assets/examples/` | Correct/incorrect patterns by category or technique |
+| "How do I verify my ADC behavioral model?" | `references/adc-testbench-guide.md` | ADC verification guidance; runnable voltage-domain flows belong to `behavioral-va-eval` |
+| "Show me working examples" | Core DUT examples below | Default to the curated DUT set; use the broader archive only when needed |
 | "What's this advanced syntax for?" | `references/verilog-a-advanced.md` | String parsing, `$vt`, `branch`, `@(timer)`, conditional compilation, etc. |
 
 ---
@@ -70,6 +76,16 @@ To simulate, you need a testbench. That is a separate concern handled by the `ev
 - Testbench: `tb_sar_adc.scs`, `tb_comparator.scs` — `.scs` netlist, `tb_` prefix here
 
 **NEVER create `tb_*.va`.** See `evas-sim/SKILL.md` for testbench structure and simulation workflow.
+
+## Example Selection Policy
+
+Do not browse the full `assets/examples/` tree by default.
+
+- Default reference set: the curated core DUT examples below
+- Fallback reference set: `assets/examples-archive/`
+- Supplemental only: `signal-source/`, `measurement-helpers/`, and helper-heavy calibration patterns
+
+If the request matches a common DUT category, stay within the core set unless it is clearly insufficient.
 
 ---
 
@@ -284,9 +300,9 @@ Use a temporary variable and assign once.
 | Sample & Hold | `references/categories/sample-hold.md` | voltage |
 | Amplifier & Filter | `references/categories/amplifier-filter.md` | current |
 | Digital Logic | `references/categories/digital-logic.md` | voltage |
-| Signal Source | `references/categories/signal-source.md` | voltage |
+| Signal Source | `references/categories/signal-source.md` | voltage (supplemental) |
 | Passive & Model | `references/categories/passive-model.md` | current |
-| Measurement Helpers | `references/categories/measurement-helpers.md` | voltage |
+| Measurement Helpers | `references/categories/measurement-helpers.md` | voltage (supplemental / verification-leaning) |
 | Testbench (`.scs`) | `references/categories/testbench-spectre.md` | N/A |
 | Power & Switch | `references/categories/power-switch.md` | either |
 | Calibration | `references/categories/calibration.md` | voltage |
@@ -295,7 +311,41 @@ Use a temporary variable and assign once.
 
 ## Module Template
 
-Start from `assets/template.va`. Reference examples in `assets/examples/`.
+Start from `assets/template.va`. Reference the core DUT examples below before browsing `assets/examples-archive/`.
+
+## Core DUT Examples
+
+Use these first. They are the primary authoring references for this skill:
+
+- `assets/examples/adc-sar/sar_logic_4b_sync.va`
+- `assets/examples/adc-sar/sar_logic_4b_async.va`
+- `assets/examples/adc-sar/sar_4b_behavioral.va`
+- `assets/examples/comparator/comp_fire_reset.va`
+- `assets/examples/comparator/comp_latching.va`
+- `assets/examples/dac/dac_4b_binary_weighted.va`
+- `assets/examples/digital-logic/and2_gate.va`
+- `assets/examples/digital-logic/dff_set_reset.va`
+- `assets/examples/sample-hold/single_edge_sampler.va`
+- `assets/examples/pll-clock/pfd_with_reset.va`
+- `assets/examples/amplifier-filter/lpf_1st_order.va`
+- `assets/examples/power-switch/conductance_switch.va`
+- `assets/examples/passive-model/rlc_network.va`
+
+## Supplemental Examples
+
+The files under `assets/examples-archive/` are secondary references. They are
+useful for edge cases, variants, helpers, or legacy patterns, but they should
+not be the first examples surfaced by this skill.
+
+In particular:
+
+- `signal-source/` is supplemental and often serves as stimulus support
+- `measurement-helpers/` is supplemental and verification-leaning
+- helper-style ADC files such as ideal comparators or small conversion blocks
+  should not outrank the core SAR/DAC examples above
+
+Runnable verification flows, `.scs` testbenches, and example simulations belong
+to `../behavioral-va-eval/examples/`, not this DUT example archive.
 
 ---
 
@@ -510,7 +560,7 @@ Do not attempt. Refer to `domain-routing.md § Mixed`.
 - Metrics: ENOB, SNDR, SFDR, THD, SNR; TIADC per-channel mismatch, nonlinearity, jitter
 - Always call `find_coherent_frequency()` to avoid spectral leakage
 - Read results from the dict: `result['enob']`, `result['sndr_db']`, `result['sfdr_db']`, `result['bin_idx']`, etc.
-- Full workflow: `references/adc-testbench-guide.md` · Examples: `assets/examples/adc-verification/`
+- Full workflow: `references/adc-testbench-guide.md` · Runnable examples: `../behavioral-va-eval/examples/`
 
 ---
 

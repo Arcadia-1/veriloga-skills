@@ -1,0 +1,1 @@
+Create a testbench probe that monitors a DAC output and computes code-by-code INL and DNL. Input: analog DAC output + clock strobe. Output: writes results to a file using $fopen/$fdisplay at end of simulation.

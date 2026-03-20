@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "behavioral-va-eval result",
+  "type": "object",
+  "required": [
+    "task_id",
+    "status",
+    "scores",
+    "artifacts"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "FAIL_DUT_COMPILE",
+        "FAIL_TB_COMPILE",
+        "FAIL_SIM_CORRECTNESS",
+        "FAIL_INFRA"
+      ]
+    },
+    "scores": {
+      "type": "object",
+      "required": [
+        "dut_compile",
+        "tb_compile",
+        "sim_correct",
+        "weighted_total"
+      ],
+      "properties": {
+        "dut_compile": { "type": "number" },
+        "tb_compile": { "type": "number" },
+        "sim_correct": { "type": "number" },
+        "weighted_total": { "type": "number" }
+      }
+    },
+    "backend_used": {
+      "type": "string"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

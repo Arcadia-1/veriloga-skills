@@ -241,8 +241,8 @@
       "category": "ADC/SAR",
       "domain": "voltage",
       "prompt": "Write a 4-bit static analog-to-binary converter module named _va_d2b_4b. Input: analog voltage VIN (range VSS to VDD). Output: 4-bit binary code DOUT[3:0]. No clock — purely combinational, continuous tracking. Use VDD/VSS power ports.",
-      "expected_output": "A .va file with ANSI-inline or old-style port declarations compatible with Spectre, voltage normalization, integer quantization to 16 levels, bit extraction via shift/mask in genvar loop, transition() output with supply voltages. Reference: assets/examples/adc-sar/_va_d2b_4b.va",
-      "files": ["assets/examples/adc-sar/_va_d2b_4b.va"]
+      "expected_output": "A .va file with ANSI-inline or old-style port declarations compatible with Spectre, voltage normalization, integer quantization to 16 levels, bit extraction via shift/mask in genvar loop, transition() output with supply voltages. Reference: assets/examples-archive/adc-sar/_va_d2b_4b.va",
+      "files": ["assets/examples-archive/adc-sar/_va_d2b_4b.va"]
     }
   ]
 }

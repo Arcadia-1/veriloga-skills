@@ -1,0 +1,13 @@
+{
+  "id": "spectre_port_discipline",
+  "family": "bugfix",
+  "category": "digital-logic",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": ["electrical VDD", "electrical VSS"],
+  "must_not_include": ["inout electrical VDD, VSS"],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut_fixed.va"],
+  "scoring": ["syntax", "routing"]
+}

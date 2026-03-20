@@ -1,0 +1,30 @@
+{
+  "id": "multimod_divider",
+  "family": "spec-to-va",
+  "category": "pll-clock",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 8,
+  "source_name": "eval-multimod-divider",
+  "expected_output_summary": "A .va file with counter-based divider, MOD-controlled modulus switching, prescaler output, digital bus input for ratio.",
+  "source_files": []
+}

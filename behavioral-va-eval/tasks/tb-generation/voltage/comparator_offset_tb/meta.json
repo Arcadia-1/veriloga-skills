@@ -1,0 +1,13 @@
+{
+  "id": "comparator_offset_tb",
+  "family": "tb-generation",
+  "category": "comparator",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": ["simulator lang=spectre", "tran", "save", "ahdl_include"],
+  "must_not_include": ["I(", ".control"],
+  "inputs": ["prompt.md"],
+  "artifacts": ["tb_cmp_offset.scs"],
+  "scoring": ["tb_compile"]
+}

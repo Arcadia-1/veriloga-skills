@@ -1,0 +1,30 @@
+{
+  "id": "segmented_dac",
+  "family": "spec-to-va",
+  "category": "dac",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 6,
+  "source_name": "eval-segmented-dac",
+  "expected_output_summary": "A .va file with segmented architecture, 63 unary MSB elements, 256-level binary LSB, differential output around vcm.",
+  "source_files": []
+}

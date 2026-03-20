@@ -1,0 +1,1 @@
+Write a 4-bit static analog-to-binary converter module named _va_d2b_4b. Input: analog voltage VIN (range VSS to VDD). Output: 4-bit binary code DOUT[3:0]. No clock — purely combinational, continuous tracking. Use VDD/VSS power ports.

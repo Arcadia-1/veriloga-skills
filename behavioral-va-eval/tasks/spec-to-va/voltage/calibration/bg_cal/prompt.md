@@ -1,0 +1,1 @@
+Write a background calibration module that measures comparator offset via a chopping technique. Inputs: COMP_OUT, CLK. Output: 6-bit trim code (TRIM[5:0]). It should average N comparisons, compute the offset direction, and adjust the trim code by ±1 LSB each calibration cycle. Include a SETTLED output flag when trim code stops changing for 8 consecutive cycles.

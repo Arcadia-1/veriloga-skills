@@ -1,0 +1,23 @@
+`include "disciplines.vams"
+`include "constants.vams"
+
+// NOT gate: out = NOT a
+module not_gate(a, out);
+    input  a;
+    output out;
+    electrical a, out;
+
+    parameter real vth   = 0.4;    // VDD/2
+    parameter real vhigh = 0.8;
+    parameter real vlow  = 0.0;
+
+    `default_transition 30p
+
+    analog begin
+        @(initial_step)
+            $strobe("[not_gate] INIT | vth=%.3gV | vhigh=%.3gV", vth, vhigh);
+        V(out) <+ transition(
+            (V(a) > vth) ? vlow : vhigh,
+            30p);
+    end
+endmodule

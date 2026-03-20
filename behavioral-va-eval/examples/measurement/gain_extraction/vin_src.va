@@ -1,0 +1,49 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// Clocked noisy sine source (sample-and-hold at CLK rising edge).
+//
+// VOUT_P = vdd/2 + ampl*sin(2*pi*freq*t) + N(0, sigma)
+// VOUT_N = vdd/2  (DC, single-ended noise on positive side)
+//
+// Output only changes at CLK rising edges, preventing continuous-time
+// random re-evaluation loops in event-driven simulators.
+
+module vin_src(
+    input  electrical CLK,
+    input  electrical RST_N,
+    output electrical VOUT_P,
+    output electrical VOUT_N
+);
+
+parameter real    vdd   = 0.9;
+parameter real    vth   = 0.45;
+parameter real    ampl  = 0.15;
+parameter real    freq  = 300e3;
+parameter real    sigma = 0.01;
+parameter integer SEED  = 0;
+
+real vp, vn;
+
+analog begin
+    @(initial_step) begin
+        vp = vdd / 2.0;
+        vn = vdd / 2.0;
+        $strobe("[vin_src] INIT | ampl=%.3fV freq=%.0fkHz sigma=%.1fmV",
+                ampl, freq*1e-3, sigma*1e3);
+    end
+
+    @(cross(V(CLK) - vth, +1)) begin
+        if (V(RST_N) > vth) begin
+            vp = vdd/2.0 + ampl * sin(2.0 * `M_PI * freq * $abstime)
+                         + sigma * $rdist_normal(SEED, 0, 1);
+            vn = vdd / 2.0;
+        end
+    end
+
+    V(VOUT_P) <+ transition(vp, 0);
+    V(VOUT_N) <+ transition(vn, 0);
+end
+
+endmodule

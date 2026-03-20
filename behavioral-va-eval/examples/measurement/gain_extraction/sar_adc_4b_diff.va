@@ -1,0 +1,69 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// 4-bit differential SAR ADC with residue output.
+//
+// Input range  : VIN_diff = VIN_P - VIN_N in [-vdd/2, +vdd/2]
+// Quantisation : 16 mid-tread codes, LSB_diff = vdd/16.
+// Residue      : VRES_diff = VIN_diff - (code-7.5)*vdd/16  in [-vdd/32, +vdd/32]
+//                VRES_P = vdd/2 + VRES_diff/2
+//                VRES_N = vdd/2 - VRES_diff/2
+// Clocking     : converts on every rising edge of CLK.
+// Reset        : RST_N active-low -> code=8, residue=0.
+
+module sar_adc_4b_diff(
+    input  electrical        VIN_P,
+    input  electrical        VIN_N,
+    input  electrical        CLK,
+    input  electrical        RST_N,
+    output electrical [3:0]  DOUT,
+    output electrical        VRES_P,
+    output electrical        VRES_N
+);
+
+parameter real vdd  = 0.9;
+parameter real vth  = 0.45;
+parameter real vlsb = 0.05625;
+
+real vin_diff, vres_diff;
+integer code;
+genvar k;
+
+analog begin
+    @(initial_step) begin
+        code      = 8;
+        vres_diff = 0.0;
+        $strobe("[sar_adc_4b_diff] INIT | vdd=%.3gV vlsb=%.4fmV",
+                vdd, vlsb*1e3);
+    end
+
+    @(cross(V(CLK) - vth, +1)) begin
+        if (V(RST_N) < vth) begin
+            code      = 8;
+            vres_diff = 0.0;
+        end else begin
+            vin_diff = V(VIN_P, VIN_N);
+            code = floor((vin_diff + vth) / vlsb);
+            if (code <  0) code = 0;
+            if (code > 15) code = 15;
+            vres_diff = vin_diff - (code - 7.5) * vlsb;
+            $strobe("[sar_adc_4b_diff] t=%.3fns | vin_diff=%+.4fV | code=%d | vres=%+.4fmV",
+                    $abstime*1e9, vin_diff, code, vres_diff*1e3);
+        end
+    end
+
+    // Digital outputs
+    for (k = 0; k < 4; k = k + 1) begin
+        if ((code >> k) & 1)
+            V(DOUT[k]) <+ transition(vdd, 0);
+        else
+            V(DOUT[k]) <+ transition(0.0, 0);
+    end
+
+    // Differential residue, centred at vdd/2
+    V(VRES_P) <+ transition(vth + vres_diff * 0.5, 0);
+    V(VRES_N) <+ transition(vth - vres_diff * 0.5, 0);
+end
+
+endmodule

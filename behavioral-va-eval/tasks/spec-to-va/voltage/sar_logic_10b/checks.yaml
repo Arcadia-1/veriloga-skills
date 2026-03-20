@@ -1,0 +1,17 @@
+syntax:
+  must_include:
+    - "module"
+    - "transition("
+    - "@(cross("
+  must_not_include:
+    - "I("
+    - "ddt("
+    - "simulator lang=spectre"
+routing:
+  expected_backend: "evas"
+simulation:
+  mode: "optional_until_harness_exists"
+behavior:
+  checks:
+    - "ready_flag_exists"
+    - "dac_bus_exists"

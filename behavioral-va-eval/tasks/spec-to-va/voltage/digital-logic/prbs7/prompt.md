@@ -1,0 +1,1 @@
+Create a 7-bit pseudo-random bit sequence (PRBS-7) generator in Verilog-A. Clock-driven, with a serial output and a parallel 7-bit state bus output. Use LFSR with XOR feedback taps at positions 7 and 6.

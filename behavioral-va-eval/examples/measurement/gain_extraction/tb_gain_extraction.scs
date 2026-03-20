@@ -1,0 +1,58 @@
+// gain_extraction: waveform verification only (50 us).
+//
+// Convergence analysis (3 seeds, 2^18 samples) is done in NumPy
+// inside analyze_gain_extraction.py — no need to simulate it here.
+//
+// Signal path:
+//   vin_src (sine + noise, clocked) --> dither_adder <-- LFSR (DPN)
+//                                              |
+//                                       gain_amp_fixed  (ACTUAL_GAIN = GAIN_NOM*(1+GAIN_ERR))
+//                                              |
+//                                        VAMP (diff)
+
+simulator lang=spectre
+global 0
+
+ahdl_include "vin_src.va"
+ahdl_include "lfsr.va"
+ahdl_include "dither_adder.va"
+ahdl_include "gain_amp_fixed.va"
+
+parameters vdd=0.9 GAIN_NOM=8.0 GAIN_ERR=0.08 fs=50e6 fin=300e3
+parameters ACTUAL_GAIN=8.64
+parameters DITHER_AMP=0.014063
+parameters VIN_NOISE=0.01
+
+// -- Supplies ------------------------------------------------------------------
+Vvdd (vdd 0) vsource dc=vdd
+Vvss (vss 0) vsource dc=0
+
+// -- Clock: 50 MHz -------------------------------------------------------------
+Vclk (clk 0) vsource type=pulse val0=0 val1=vdd period=20n delay=5n \
+             rise=1n fall=1n width=9n
+
+// -- Reset: deassert after 40 ns -----------------------------------------------
+Vrst_n (rst_n 0) vsource type=pwl wave=[0 0  39.5n 0  40n vdd  100u vdd]
+
+// -- LFSR enable ---------------------------------------------------------------
+Ven (en 0) vsource dc=vdd
+
+// -- Clocked noisy sine input --------------------------------------------------
+IVIN (clk rst_n vinp vinn) vin_src \
+     vdd=vdd vth=0.45 ampl=0.02 freq=fin sigma=VIN_NOISE
+
+// -- LFSR ----------------------------------------------------------------------
+ILFSR (dpn vdd vss clk en rst_n) lfsr seed=42
+
+// -- Dither adder --------------------------------------------------------------
+IDITH (vinp vinn dpn vdin_p vdin_n) dither_adder \
+      vdd=vdd vth=0.45 DITHER_AMP=DITHER_AMP
+
+// -- Fixed-gain amplifier ------------------------------------------------------
+IAMP (vdin_p vdin_n vamp_p vamp_n) gain_amp_fixed \
+     vdd=vdd ACTUAL_GAIN=ACTUAL_GAIN
+
+// -- Simulation: 50 us for waveform verification only -------------------------
+tran tran stop=50u maxstep=8n
+
+save vinp:3f vinn:3f vamp_p:3f vamp_n:3f

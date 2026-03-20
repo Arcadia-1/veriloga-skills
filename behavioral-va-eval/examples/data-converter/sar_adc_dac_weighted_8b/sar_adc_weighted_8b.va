@@ -1,0 +1,86 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_BITS 8
+`default_transition 30p
+
+// 8-bit SAR ADC with configurable binary weights.
+//
+// Default weights (MSB→LSB): 128, 64, 32, 16, 8, 4, 2, 1
+// total_sum = 255.  Input [0, vdd] → code [0, 255].
+//
+// Algorithm: at each step i (MSB first), tentatively assert bit i.
+//   If (partial_sum + weight[i]) / total_sum * vdd ≤ vsampled → keep bit.
+//
+// Sampling phase: tracks VIN while CLKS is LOW.
+// Conversion: on each rising edge of CLKS.
+// RST_N: active-low synchronous reset — clears all output bits.
+//
+// Output mapping: DOUT[7] = MSB (weight 128), DOUT[0] = LSB (weight 1).
+// Matches dac_weighted_8b pin-for-pin for a zero-error round-trip.
+
+module sar_adc_weighted_8b(
+    input  electrical               VIN,
+    input  electrical               CLKS,
+    input  electrical               RST_N,
+    output electrical [`NUM_BITS-1:0] DOUT
+);
+
+parameter real vdd = 0.9;
+parameter real vth = 0.45;
+
+real weight[`NUM_BITS:1];   // weight[8]=MSB, weight[1]=LSB
+real total_sum;
+real vsampled, vdac_partial;
+integer dout_bits[`NUM_BITS:1];
+genvar i;
+
+analog begin
+    @(initial_step) begin
+        weight[8] = 128; weight[7] = 64; weight[6] = 32; weight[5] = 16;
+        weight[4] = 8;   weight[3] = 4;  weight[2] = 2;  weight[1] = 1;
+
+        total_sum = 0;
+        for (i = `NUM_BITS; i >= 1; i = i - 1)
+            total_sum = total_sum + weight[i];
+
+        for (i = `NUM_BITS; i >= 1; i = i - 1)
+            dout_bits[i] = 0;
+
+        $strobe("[sar_adc_weighted_8b] INIT | vdd=%.3gV | total_sum=%g", vdd, total_sum);
+    end
+
+    // Track input during the sampling phase (CLKS low)
+    if (V(CLKS) < vth)
+        vsampled = V(VIN);
+
+    // Action on rising edge of CLKS
+    @(cross(V(CLKS) - vth, +1)) begin
+        if (V(RST_N) < vth) begin
+            // Synchronous reset: clear all output bits
+            for (i = `NUM_BITS; i >= 1; i = i - 1)
+                dout_bits[i] = 0;
+        end else begin
+            // SAR successive-approximation
+            vdac_partial = 0.0;
+            for (i = `NUM_BITS; i >= 1; i = i - 1) begin
+                if ((vdac_partial + weight[i]) / total_sum * vdd <= vsampled) begin
+                    dout_bits[i] = 1;
+                    vdac_partial = vdac_partial + weight[i];
+                end else begin
+                    dout_bits[i] = 0;
+                end
+            end
+            $strobe("[sar_adc_weighted_8b] t=%.3f ns | vin=%.5gV | code=%d%d%d%d%d%d%d%d",
+                    $abstime*1e9, vsampled,
+                    dout_bits[8], dout_bits[7], dout_bits[6], dout_bits[5],
+                    dout_bits[4], dout_bits[3], dout_bits[2], dout_bits[1]);
+        end
+    end
+
+    // DOUT[7]=MSB (weight[8]=128), DOUT[0]=LSB (weight[1]=1)
+    for (i = `NUM_BITS; i >= 1; i = i - 1)
+        V(DOUT[i-1]) <+ transition(dout_bits[i] ? vdd : 0, 0);
+end
+
+endmodule

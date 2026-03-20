@@ -1,0 +1,30 @@
+{
+  "id": "clk_divider",
+  "family": "spec-to-va",
+  "category": "digital-logic",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 16,
+  "source_name": "eval-clk-divider",
+  "expected_output_summary": "A .va file with programmable counter, toggle logic for 50% duty, sync reset, LOCK flag after first complete cycle.",
+  "source_files": []
+}

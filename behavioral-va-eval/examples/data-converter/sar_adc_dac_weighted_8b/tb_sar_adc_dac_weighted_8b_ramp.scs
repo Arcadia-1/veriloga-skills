@@ -1,0 +1,45 @@
+// tb_sar_adc_dac_weighted_8b_ramp.scs
+//
+// Slow linear ramp: 0 V → VDD in 25.6 µs after reset.
+// At fs = 500 MHz (T = 2 ns), ramp advances 0.9V/12800 ≈ 0.07 mV/step ≈ 0.02 LSB/step,
+// giving ~50 samples per LSB-wide code bin → clean transition-voltage DNL/INL.
+//
+// RST_N: active-low for first 10 clock cycles (20 ns).
+//
+simulator lang=spectre
+global 0
+
+ahdl_include "sar_adc_weighted_8b.va"
+ahdl_include "dac_weighted_8b.va"
+ahdl_include "sh_ideal.va"
+
+parameters vdd=0.9 fs=500e6
+
+// Supply rails
+Vvdd (vdd 0) vsource dc=vdd
+Vvss (vss 0) vsource dc=0
+
+// Sampling clock: 500 MHz  (period = 2 ns)
+Vclks (clks 0) vsource type=pulse val0=0 val1=vdd period=2n \
+               rise=100p fall=100p
+
+// Reset: active-low for first 10 clock cycles (0 → 20 ns)
+Vrst_n (rst_n 0) vsource type=pwl wave=[0 0  19.5n 0  20n vdd  26000n vdd]
+
+// Ramp: 0 V → VDD in 25.6 µs starting at t=0 (held at 0 during reset, then ramps)
+// 12800 clock cycles × 2 ns × (0.9 V / 12800) ≈ 70 µV/step ≈ 0.02 LSB/step → ~50 samples/code
+Vvin (vin 0) vsource type=pwl wave=[0 0  20n 0  25620n vdd]
+
+// ADC: VIN CLKS RST_N → DOUT[7:0]
+IADC (vin clks rst_n dout_7 dout_6 dout_5 dout_4 dout_3 dout_2 dout_1 dout_0) \
+      sar_adc_weighted_8b vdd=vdd
+
+// DAC: DIN[7:0] → VOUT
+IDAC (dout_7 dout_6 dout_5 dout_4 dout_3 dout_2 dout_1 dout_0 vout) \
+      dac_weighted_8b vdd=vdd
+
+// S&H: samples vin on same rising clks edge as ADC → vin_sh
+ISH (vin clks vdd vss rst_n vin_sh) sh_ideal
+
+tran tran stop=25.7u maxstep=500p
+save vin:3f vin_sh:3f clks:2e rst_n:d vout:3f dout_7:d dout_6:d dout_5:d dout_4:d dout_3:d dout_2:d dout_1:d dout_0:d

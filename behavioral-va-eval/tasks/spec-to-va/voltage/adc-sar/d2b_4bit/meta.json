@@ -1,0 +1,34 @@
+{
+  "id": "d2b_4bit",
+  "family": "spec-to-va",
+  "category": "adc-sar",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical",
+    "genvar",
+    "transition("
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 27,
+  "source_name": "eval-d2b-4bit",
+  "expected_output_summary": "A .va file with ANSI-inline or old-style port declarations compatible with Spectre, voltage normalization, integer quantization to 16 levels, bit extraction via shift/mask in genvar loop, transition() output with supply voltages. Reference: assets/examples-archive/adc-sar/_va_d2b_4b.va",
+  "source_files": [
+    "assets/examples-archive/adc-sar/_va_d2b_4b.va"
+  ]
+}

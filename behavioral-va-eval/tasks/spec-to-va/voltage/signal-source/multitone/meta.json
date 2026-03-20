@@ -1,0 +1,30 @@
+{
+  "id": "multitone",
+  "family": "spec-to-va",
+  "category": "signal-source",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 17,
+  "source_name": "eval-multitone",
+  "expected_output_summary": "A .va file with frequency/amplitude parameter arrays, summation loop, $bound_step tied to max frequency, $abstime-based generation.",
+  "source_files": []
+}

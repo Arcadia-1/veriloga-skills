@@ -1,0 +1,23 @@
+// LB_LFSR: Linear Feedback Shift Register
+simulator lang=spectre
+global 0
+
+ahdl_include "lfsr.va"
+
+// Power supplies
+Vvdd (vdd 0) vsource dc=0.9 type=dc
+Vvss (vss 0) vsource dc=0.0 type=dc
+Ven (en 0) vsource dc=0.9 type=dc
+
+// Reset: active low, deassert after 100ns
+Vrstb (rstb 0) vsource type=pwl wave=[0 0 100e-9 0 101e-9 0.9 500e-9 0.9]
+
+// Clock: 1GHz, delayed 2.5ns
+Vclk (clk 0) vsource type=pulse val0=0 val1=0.9 period=1n delay=2.5n \
+        rise=10p fall=10p
+
+// DUT (port order: DPN VDD VSS CLK EN RSTB)
+IDUT (dpn vdd vss clk en rstb) lfsr seed=123
+
+tran tran stop=500n maxstep=10p
+save clk:2e dpn:2e rstb:d

@@ -1,0 +1,55 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`define NUM_BITS 8
+`default_transition 30p
+
+// 8-bit combinatorial binary-weighted DAC.
+//
+// Weights (MSB→LSB): 128, 64, 32, 16, 8, 4, 2, 1  (total_sum = 255).
+// DIN[7] = MSB (weight 128),  DIN[0] = LSB (weight 1).
+//
+// VOUT = (sum of active weights) / 255 * vdd.
+//
+// Evaluates every time step (combinatorial — no clock needed).
+// Pin mapping is identical to sar_adc_weighted_8b DOUT for zero-error
+// round-trip reconstruction.
+
+module dac_weighted_8b(
+    input  electrical [`NUM_BITS-1:0] DIN,
+    output electrical                 VOUT
+);
+
+parameter real vdd = 0.9;
+parameter real vth = 0.45;
+
+real weight[`NUM_BITS:1];   // weight[8]=MSB, weight[1]=LSB
+real total_sum;
+real vout_val;
+genvar i;
+
+analog begin
+    @(initial_step) begin
+        weight[8] = 128; weight[7] = 64; weight[6] = 32; weight[5] = 16;
+        weight[4] = 8;   weight[3] = 4;  weight[2] = 2;  weight[1] = 1;
+
+        total_sum = 0;
+        for (i = `NUM_BITS; i >= 1; i = i - 1)
+            total_sum = total_sum + weight[i];
+
+        vout_val = 0;
+        $strobe("[dac_weighted_8b] INIT | vdd=%.3gV | total_sum=%g", vdd, total_sum);
+    end
+
+    // Combinatorial accumulation — reset and sum every evaluation step
+    vout_val = 0;
+    for (i = `NUM_BITS; i >= 1; i = i - 1) begin
+        if (V(DIN[i-1]) > vth)
+            vout_val = vout_val + weight[i];
+    end
+    vout_val = vout_val / total_sum * vdd;
+
+    V(VOUT) <+ transition(vout_val, 0);
+end
+
+endmodule

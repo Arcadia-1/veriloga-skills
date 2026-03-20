@@ -1,0 +1,13 @@
+syntax:
+  must_include:
+    - "transition("
+    - "@(cross("
+routing:
+  expected_backend: "evas"
+simulation:
+  required_outputs:
+    - "tran.csv"
+behavior:
+  checks:
+    - "code_monotonic_non_decreasing"
+    - "reset_initializes_code"

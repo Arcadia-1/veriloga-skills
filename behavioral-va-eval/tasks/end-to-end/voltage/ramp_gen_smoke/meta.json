@@ -1,0 +1,13 @@
+{
+  "id": "ramp_gen_smoke",
+  "family": "end-to-end",
+  "category": "signal-source",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": ["transition(", "@(cross("],
+  "must_not_include": ["I(", "ddt("],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut.va", "tb_ramp_gen.scs", "tran.csv"],
+  "scoring": ["dut_compile", "tb_compile", "sim_correct"]
+}

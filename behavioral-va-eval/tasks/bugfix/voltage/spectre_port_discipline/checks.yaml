@@ -1,0 +1,8 @@
+syntax:
+  must_not_include:
+    - "inout electrical VDD, VSS"
+  must_include:
+    - "inout VDD"
+    - "inout VSS"
+routing:
+  expected_backend: "evas"

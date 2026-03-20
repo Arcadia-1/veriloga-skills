@@ -1,0 +1,58 @@
+`include "disciplines.vams"
+`include "constants.vams"
+
+// Set default transition time to 10ps
+`default_transition 10p
+
+(* ignore_hidden_state *)
+
+module edge_interval_timer(CLK_1, CLK_2, OUT_PS);
+    input CLK_1, CLK_2;
+    output OUT_PS;
+    electrical CLK_1, CLK_2, OUT_PS;
+
+    // Threshold voltage parameter 0.4V
+    parameter real VTH = 0.4;
+    
+    // Internal variables
+    real t_start;
+    real t_diff_ps; // Time difference stored in picoseconds
+    real t_diff_ps_prev; // Previous delay for difference calculation
+    integer is_armed;
+
+    analog begin
+        // Initialize values
+        @ (initial_step) begin
+            t_start = 0.0;
+            t_diff_ps = 0.0;
+            t_diff_ps_prev = 0.0;
+            is_armed = 0;
+        end
+
+        // Capture CLK_1 rising edge
+        @(cross(V(CLK_1) - VTH, +1)) begin
+            t_start = $abstime;
+            is_armed = 1;
+        end
+
+        // Capture CLK_2 rising edge and calculate delta
+        @(cross(V(CLK_2) - VTH, +1)) begin
+            if (is_armed == 1) begin
+                // Convert (seconds) to (picoseconds): 1s = 1e12 ps
+                t_diff_ps = ($abstime - t_start) * 1e12;
+                is_armed = 0;
+
+                // Print current delay and difference with last delay
+                $strobe("[edge_interval_timer] t=%.3f ns | delay=%.3f ps | diff=%.3f ps", $abstime*1e9, t_diff_ps, t_diff_ps - t_diff_ps_prev);
+
+                // Update previous delay for next measurement
+                t_diff_ps_prev = t_diff_ps;
+            end
+        end
+
+        // Drive the output port with the calculated value
+        // The value remains held until the next measurement is completed
+        V(OUT_PS) <+ transition(t_diff_ps, 0, 10p);
+
+    end
+endmodule

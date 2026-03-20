@@ -1,0 +1,30 @@
+{
+  "id": "cdac_cal",
+  "family": "spec-to-va",
+  "category": "dac",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 7,
+  "source_name": "eval-cdac-cal",
+  "expected_output_summary": "A .va file with capacitor weight array, charge redistribution math, calibration cap switching, differential top/bottom plate outputs.",
+  "source_files": []
+}

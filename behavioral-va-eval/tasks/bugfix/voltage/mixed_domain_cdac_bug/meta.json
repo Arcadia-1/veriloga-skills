@@ -1,0 +1,13 @@
+{
+  "id": "mixed_domain_cdac_bug",
+  "family": "bugfix",
+  "category": "adc-sar",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": ["@(cross(", "transition(", "V("],
+  "must_not_include": ["I(", "ddt("],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut_fixed.va"],
+  "scoring": ["dut_compile", "tb_compile", "sim_correct"]
+}

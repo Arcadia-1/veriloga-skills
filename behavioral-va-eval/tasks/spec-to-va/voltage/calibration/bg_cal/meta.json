@@ -1,0 +1,31 @@
+{
+  "id": "bg_cal",
+  "family": "spec-to-va",
+  "category": "calibration",
+  "domain": "voltage",
+  "difficulty": "hard",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical",
+    "transition("
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 21,
+  "source_name": "eval-bg-cal",
+  "expected_output_summary": "A .va file with accumulator-based averaging, chopping logic, \u00b11 step adjustment, settled counter, digital bus output with transition().",
+  "source_files": []
+}

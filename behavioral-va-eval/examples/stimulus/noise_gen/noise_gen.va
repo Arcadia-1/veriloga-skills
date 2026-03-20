@@ -1,0 +1,43 @@
+
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 10p
+
+module noise_gen (
+    input electrical  vin_i,
+    output electrical vout_o
+);
+
+    // -------------------------------------------------------
+    // Parameters
+    // -------------------------------------------------------
+    parameter real sigma = 0.01;  // Noise standard deviation (in Volts)
+
+    // -------------------------------------------------------
+    // Internal variables
+    // -------------------------------------------------------
+    real vin, noise, vout;
+
+    // -------------------------------------------------------
+    // Analog behavior
+    // -------------------------------------------------------
+    analog begin
+        @(initial_step)
+            $strobe("[noise_gen] INIT | sigma=%.5gV", sigma);
+
+        // Read input voltage
+        vin = V(vin_i);
+
+        // Generate Gaussian noise (zero-mean, bidirectional)
+        noise = sigma * $rdist_normal(0, 0, 1);
+
+        // Output = Input + Noise
+        vout = vin + noise;
+
+        // Write output voltage
+        V(vout_o) <+ transition(vout);
+    end
+
+endmodule

@@ -1,0 +1,13 @@
+{
+  "id": "clk_div_min_tb",
+  "family": "tb-generation",
+  "category": "digital-logic",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": ["simulator lang=spectre", "tran", "save", "ahdl_include"],
+  "must_not_include": ["I(", ".control"],
+  "inputs": ["prompt.md"],
+  "artifacts": ["tb_clk_div.scs"],
+  "scoring": ["syntax", "routing", "simulation"]
+}

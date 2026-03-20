@@ -1,0 +1,10 @@
+syntax:
+  must_include:
+    - "electrical"
+    - "simulator lang=spectre"
+    - "ahdl_include"
+  must_not_include:
+    - "I("
+    - "ddt("
+tb_compile:
+  backend: "evas"

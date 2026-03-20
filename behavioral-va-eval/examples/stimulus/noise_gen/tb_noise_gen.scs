@@ -1,0 +1,13 @@
+// noise_gen: Adds Gaussian noise (sigma=0.1V) to a DC input voltage
+simulator lang=spectre
+global 0
+
+ahdl_include "noise_gen.va"
+
+// DC input at 1.0V
+Vvin (vin_i 0) vsource type=dc dc=1.0
+
+IDUT (vin_i vout_o) noise_gen sigma=0.1
+
+tran tran stop=500n maxstep=0.5n
+save vin_i:3f vout_o:3f

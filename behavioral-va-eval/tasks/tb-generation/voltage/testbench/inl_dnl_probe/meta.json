@@ -1,0 +1,28 @@
+{
+  "id": "inl_dnl_probe",
+  "family": "tb-generation",
+  "category": "testbench",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "tb_compile"
+  ],
+  "source_eval_id": 23,
+  "source_name": "eval-inl-dnl-probe",
+  "expected_output_summary": "A .va file with code-stepping on strobe, voltage capture array, DNL/INL computation at final_step, file I/O output.",
+  "source_files": []
+}

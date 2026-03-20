@@ -1,0 +1,30 @@
+{
+  "id": "nrz_prbs",
+  "family": "spec-to-va",
+  "category": "signal-source",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 18,
+  "source_name": "eval-nrz-prbs",
+  "expected_output_summary": "A .va file with 15-bit LFSR, data-rate clock via $abstime or timer, FIR pre-emphasis (main + post cursor), differential output.",
+  "source_files": []
+}

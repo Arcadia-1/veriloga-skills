@@ -1,0 +1,13 @@
+{
+  "id": "sar_logic_10b",
+  "family": "spec-to-va",
+  "category": "adc-sar",
+  "domain": "voltage",
+  "difficulty": "medium",
+  "expected_backend": "evas",
+  "must_include": ["@(cross(", "transition(", "electrical"],
+  "must_not_include": ["I(", "ddt(", "tb_"],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut.va"],
+  "scoring": ["syntax", "routing", "simulation", "behavior"]
+}

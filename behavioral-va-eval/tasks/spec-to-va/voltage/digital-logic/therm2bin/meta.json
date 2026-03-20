@@ -1,0 +1,30 @@
+{
+  "id": "therm2bin",
+  "family": "spec-to-va",
+  "category": "digital-logic",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 14,
+  "source_name": "eval-therm2bin",
+  "expected_output_summary": "A .va file that counts '1' bits in thermometer code, converts to binary, handles bubble errors via majority or summation.",
+  "source_files": []
+}

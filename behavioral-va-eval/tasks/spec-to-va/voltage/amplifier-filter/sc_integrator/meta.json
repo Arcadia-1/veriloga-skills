@@ -1,0 +1,31 @@
+{
+  "id": "sc_integrator",
+  "family": "spec-to-va",
+  "category": "amplifier-filter",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": [
+    "@(cross(",
+    "electrical"
+  ],
+  "must_not_include": [
+    "I(",
+    "ddt("
+  ],
+  "inputs": [
+    "prompt.md"
+  ],
+  "artifacts": [
+    "candidate.out"
+  ],
+  "scoring": [
+    "dut_compile",
+    "tb_compile",
+    "sim_correct"
+  ],
+  "source_eval_id": 12,
+  "source_name": "eval-sc-integrator",
+  "expected_output_summary": "A .va file with two-phase clock cross() events, charge transfer math (Cin*Vin/Cfb), held output between phases.",
+  "source_files": []
+}

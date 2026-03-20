@@ -1,0 +1,46 @@
+// d2b_4b: Unified static code driver — binary, one-hot, thermometer (active-high and active-low)
+simulator lang=spectre
+global 0
+
+ahdl_include "d2b_4b.va"
+
+// DUT: trim_code=9
+// trim_code=9 = 0b1001 → bin: bit3=1,bit2=0,bit1=0,bit0=1
+//                       → onehot: bit9 high
+//                       → therm: bits 0..8 high (9 bits)
+//
+// Port order (MSB-first for each bus):
+//   bin_o[3:0]      bin_n_o[3:0]
+//   onehot_o[15:0]  onehot_n_o[15:0]
+//   therm_o[14:0]   therm_n_o[14:0]
+IDUT (bin_o_3 bin_o_2 bin_o_1 bin_o_0 \
+      bin_n_o_3 bin_n_o_2 bin_n_o_1 bin_n_o_0 \
+      onehot_o_15 onehot_o_14 onehot_o_13 onehot_o_12 onehot_o_11 onehot_o_10 \
+      onehot_o_9 onehot_o_8 onehot_o_7 onehot_o_6 onehot_o_5 onehot_o_4 \
+      onehot_o_3 onehot_o_2 onehot_o_1 onehot_o_0 \
+      onehot_n_o_15 onehot_n_o_14 onehot_n_o_13 onehot_n_o_12 onehot_n_o_11 onehot_n_o_10 \
+      onehot_n_o_9 onehot_n_o_8 onehot_n_o_7 onehot_n_o_6 onehot_n_o_5 onehot_n_o_4 \
+      onehot_n_o_3 onehot_n_o_2 onehot_n_o_1 onehot_n_o_0 \
+      therm_o_14 therm_o_13 therm_o_12 therm_o_11 therm_o_10 \
+      therm_o_9 therm_o_8 therm_o_7 therm_o_6 therm_o_5 \
+      therm_o_4 therm_o_3 therm_o_2 therm_o_1 therm_o_0 \
+      therm_n_o_14 therm_n_o_13 therm_n_o_12 therm_n_o_11 therm_n_o_10 \
+      therm_n_o_9 therm_n_o_8 therm_n_o_7 therm_n_o_6 therm_n_o_5 \
+      therm_n_o_4 therm_n_o_3 therm_n_o_2 therm_n_o_1 therm_n_o_0) \
+      d2b_4b trim_code=9 vdd=0.9
+
+tran tran stop=10n maxstep=0.1n
+save bin_o_3:d bin_o_2:d bin_o_1:d bin_o_0:d \
+     bin_n_o_3:d bin_n_o_2:d bin_n_o_1:d bin_n_o_0:d \
+     onehot_o_15:d onehot_o_14:d onehot_o_13:d onehot_o_12:d onehot_o_11:d onehot_o_10:d \
+     onehot_o_9:d onehot_o_8:d onehot_o_7:d onehot_o_6:d onehot_o_5:d onehot_o_4:d \
+     onehot_o_3:d onehot_o_2:d onehot_o_1:d onehot_o_0:d \
+     onehot_n_o_15:d onehot_n_o_14:d onehot_n_o_13:d onehot_n_o_12:d onehot_n_o_11:d onehot_n_o_10:d \
+     onehot_n_o_9:d onehot_n_o_8:d onehot_n_o_7:d onehot_n_o_6:d onehot_n_o_5:d onehot_n_o_4:d \
+     onehot_n_o_3:d onehot_n_o_2:d onehot_n_o_1:d onehot_n_o_0:d \
+     therm_o_14:d therm_o_13:d therm_o_12:d therm_o_11:d therm_o_10:d \
+     therm_o_9:d therm_o_8:d therm_o_7:d therm_o_6:d therm_o_5:d \
+     therm_o_4:d therm_o_3:d therm_o_2:d therm_o_1:d therm_o_0:d \
+     therm_n_o_14:d therm_n_o_13:d therm_n_o_12:d therm_n_o_11:d therm_n_o_10:d \
+     therm_n_o_9:d therm_n_o_8:d therm_n_o_7:d therm_n_o_6:d therm_n_o_5:d \
+     therm_n_o_4:d therm_n_o_3:d therm_n_o_2:d therm_n_o_1:d therm_n_o_0:d

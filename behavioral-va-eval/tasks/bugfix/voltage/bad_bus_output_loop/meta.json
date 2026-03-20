@@ -1,0 +1,13 @@
+{
+  "id": "bad_bus_output_loop",
+  "family": "bugfix",
+  "category": "digital-logic",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": ["V(DOUT[", "transition("],
+  "must_not_include": ["V(DOUT) <+"],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut_fixed.va"],
+  "scoring": ["dut_compile", "tb_compile", "sim_correct"]
+}

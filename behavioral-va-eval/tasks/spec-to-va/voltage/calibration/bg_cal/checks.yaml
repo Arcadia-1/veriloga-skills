@@ -1,0 +1,14 @@
+syntax:
+  must_include:
+    - "electrical"
+    - "transition("
+  must_not_include:
+    - "I("
+    - "ddt("
+dut_compile:
+  backend: "evas"
+tb_compile:
+  backend: "evas"
+sim_correct:
+  checks:
+    - "manual_review_expected_output"

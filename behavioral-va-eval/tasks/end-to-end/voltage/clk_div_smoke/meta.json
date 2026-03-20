@@ -1,0 +1,13 @@
+{
+  "id": "clk_div_smoke",
+  "family": "end-to-end",
+  "category": "digital-logic",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": ["@(cross(", "transition("],
+  "must_not_include": ["I(", "ddt("],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut.va", "tb_clk_div.scs", "tran.csv"],
+  "scoring": ["dut_compile", "tb_compile", "sim_correct"]
+}

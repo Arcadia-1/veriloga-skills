@@ -1,0 +1,13 @@
+{
+  "id": "d2b_4bit_smoke",
+  "family": "end-to-end",
+  "category": "adc-sar",
+  "domain": "voltage",
+  "difficulty": "easy",
+  "expected_backend": "evas",
+  "must_include": ["transition(", "V(DOUT["],
+  "must_not_include": ["I(", "ddt("],
+  "inputs": ["prompt.md"],
+  "artifacts": ["dut.va", "tb_d2b.scs", "tran.csv"],
+  "scoring": ["dut_compile", "tb_compile", "sim_correct"]
+}

@@ -4,7 +4,7 @@ Instructs an Agent to write Verilog-A behavioral models that conform to Cadence 
 
 > **If you are a human**: the skill overview and structure below will help you understand what this package contains. After installation, ask the Agent to write Verilog-A for you.
 
-> **If you are an AI Agent**: skip the overview and go straight to the [Installation](#installation) section. `veriloga/SKILL.md` is the complete coding instruction set (8 mandatory rules + 12 circuit-category references); the code template is at `assets/template.va`; 31 reference examples are in `assets/examples/`.
+> **If you are an AI Agent**: skip the overview and go straight to the [Installation](#installation) section. `veriloga/SKILL.md` is the complete coding instruction set (8 mandatory rules + 12 circuit-category references); the code template is at `assets/template.va`; the DUT references are organized as a curated core set under `assets/examples/` plus an archive under `assets/examples-archive/`; the self-contained benchmark / runnable verification dataset is in `behavioral-va-eval/examples/`.
 
 ---
 
@@ -12,7 +12,7 @@ Instructs an Agent to write Verilog-A behavioral models that conform to Cadence 
 
 | Skill | Role | Function |
 |-------|------|----------|
-| **veriloga** | Core — code writing | 8 mandatory rules + 12 circuit-category references + 31 real examples; produces Verilog-A ready to drop into a Virtuoso cellview |
+| **veriloga** | Core — code writing | 8 mandatory rules + 12 circuit-category references + curated core DUT examples; produces Verilog-A ready to drop into a Virtuoso cellview |
 | **evas-sim** | Optional — voltage-domain verification | Drives the EVAS simulator to verify voltage-domain modules (SAR logic, DFF, counter, etc.) |
 | **openvaf** | Optional — current-domain verification | OpenVAF compile → ngspice/OSDI load → simulation verification |
 
@@ -24,7 +24,7 @@ Instructs an Agent to write Verilog-A behavioral models that conform to Cadence 
 
 Rules and patterns distilled from 1,809 real `.va` designs, covering 12 circuit categories for analog/mixed-signal IC design. Generated code conforms to Cadence Virtuoso / Spectre conventions and can be placed directly into a cellview.
 
-Contains 8 mandatory rules, 12 circuit-category references, and 31 real examples. See [`veriloga/SKILL.md`](./veriloga/SKILL.md).
+Contains 8 mandatory rules, 12 circuit-category references, and a curated core DUT example set with a broader supplemental archive. See [`veriloga/SKILL.md`](./veriloga/SKILL.md).
 
 ---
 

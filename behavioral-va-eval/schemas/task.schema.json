@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "behavioral-va-eval task",
+  "type": "object",
+  "required": [
+    "id",
+    "family",
+    "category",
+    "domain",
+    "difficulty",
+    "expected_backend",
+    "scoring"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string",
+      "enum": [
+        "spec-to-va",
+        "bugfix",
+        "tb-generation",
+        "end-to-end"
+      ]
+    },
+    "category": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "voltage"
+      ]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "easy",
+        "medium",
+        "hard"
+      ]
+    },
+    "expected_backend": {
+      "type": "string",
+      "enum": [
+        "evas"
+      ]
+    },
+    "must_include": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "must_not_include": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scoring": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "dut_compile",
+          "tb_compile",
+          "sim_correct"
+        ]
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

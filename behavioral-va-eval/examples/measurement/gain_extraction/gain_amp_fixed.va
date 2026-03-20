@@ -1,0 +1,31 @@
+`include "constants.vams"
+`include "disciplines.vams"
+`default_transition 30p
+
+// Fixed-gain differential amplifier (no programmable CTRL).
+//
+//   VOUT_P = vdd/2 + ACTUAL_GAIN * (VIN_P - VIN_N) / 2
+//   VOUT_N = vdd/2 - ACTUAL_GAIN * (VIN_P - VIN_N) / 2
+
+module gain_amp_fixed(
+    input  electrical VIN_P,
+    input  electrical VIN_N,
+    output electrical VOUT_P,
+    output electrical VOUT_N
+);
+
+parameter real vdd         = 0.9;
+parameter real ACTUAL_GAIN = 8.64;
+
+real vout_diff;
+
+analog begin
+    @(initial_step)
+        $strobe("[gain_amp_fixed] INIT | ACTUAL_GAIN=%.5f", ACTUAL_GAIN);
+
+    vout_diff = ACTUAL_GAIN * V(VIN_P, VIN_N);
+    V(VOUT_P) <+ vdd/2 + vout_diff * 0.5;
+    V(VOUT_N) <+ vdd/2 - vout_diff * 0.5;
+end
+
+endmodule

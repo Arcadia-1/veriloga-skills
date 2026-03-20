@@ -1,0 +1,18 @@
+// clk_burst_gen: Outputs 2 consecutive CLK pulses every div input cycles
+simulator lang=spectre
+global 0
+
+ahdl_include "clk_burst_gen.va"
+
+// Input clock: 100ns period
+Vclk (CLK 0) vsource type=pulse val0=0 val1=0.9 period=100n delay=5n rise=1n fall=1n width=49n
+
+// Reset: active-low, deasserts after 2 CLK cycles + 30ns offset to avoid
+// coincidence with CLK rising edge (CLK edges at 5n,105n,205n,...; RST at 235n)
+Vrst_n (RST_N 0) vsource type=pwl \
+        wave=[0 0  234n 0  235n 0.9  3000n 0.9]
+
+IDUT (CLK RST_N CLK_OUT) clk_burst_gen div=8 vdd=0.9 vth=0.45
+
+tran tran stop=3000n maxstep=1n
+save CLK:2e RST_N:2e CLK_OUT:2e

@@ -1,0 +1,53 @@
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 10p
+
+module cmp_offset_search(
+    input electrical CLK,
+    input electrical DCMPP,
+    input electrical VINCM,     // New input for common-mode voltage
+    output electrical VINP,
+    output electrical VINN
+);
+
+parameter integer n_steps = 10;  // stop after this many binary search iterations
+parameter vdd = 0.8;
+real vin = 0;
+real step = 100m;
+integer sign = 1;
+integer step_count;
+real vincm_v;
+
+analog begin
+
+    vincm_v = V(VINCM);
+
+    @(initial_step) begin
+        step_count = 0;
+        vincm_v = V(VINCM);
+        $strobe("[cmp_offset_search] INIT | vdd=%.3gV | step=%.5gV", vdd, step);
+    end
+
+    // Trigger on the falling edge of CLK (threshold at 0.5*vdd)
+    @ (cross(V(CLK) - 0.5 * vdd, -1)) begin
+        if (step_count < n_steps) begin
+            // Comparator decision direction
+            sign = V(DCMPP) > 0.5 * vdd;
+            // Update offset value vin
+            vin = vin - (2 * sign - 1) * step;
+            // Binary search step reduction
+            step = step / 2.0;
+            step_count = step_count + 1;
+        end
+        $strobe("[cmp_offset_search] t=%.3f ns | sign=%d | vin=%.5gV | step=%.5gV", $abstime*1e9, sign, vin, step);
+    end
+
+    // Output differential around VINCM instead of vdd/2
+    V(VINP) <+ (vincm_v + 0.5 * vin);
+    V(VINN) <+ (vincm_v - 0.5 * vin);
+
+end
+
+endmodule

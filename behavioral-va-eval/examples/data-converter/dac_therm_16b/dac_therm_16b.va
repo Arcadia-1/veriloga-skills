@@ -1,0 +1,42 @@
+module dac_therm_16b (
+    input  electrical [15:0] din_therm,
+    input  electrical        rst_n,
+    output electrical        vout
+);
+
+    parameter real vstep      = 1.0;   // 1V per step -> 0..15V
+    parameter real tr         = 10p;
+    parameter real vth        = 0.4;   // threshold for logic-1 detect
+
+    integer ones_cnt;
+    real    v_target;
+
+    genvar k;
+
+    analog begin
+        @(initial_step)
+            $strobe("[dac_therm_16b] INIT | vstep=%.5gV | vth=%.3gV", vstep, vth);
+
+        ones_cnt = 0;
+
+        // Check reset first
+        if (V(rst_n) < vth) begin
+            v_target = 0.0;
+        end
+        else begin
+            // Count ones in thermometer code
+            for (k = 0; k < 16; k = k + 1) begin
+                if (V(din_therm[k]) > vth) begin
+                    ones_cnt = ones_cnt + 1;
+                end
+            end
+
+            // Determine target voltage based on number of ones
+            v_target = ones_cnt * vstep;   // 0..16V
+        end
+
+        // Single unconditional transition contribution (Spectre-safe)
+        V(vout) <+ transition(v_target, 0, tr, tr);
+    end
+
+endmodule
