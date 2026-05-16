@@ -243,6 +243,15 @@
       "prompt": "Write a 4-bit static analog-to-binary converter module named _va_d2b_4b. Input: analog voltage VIN (range VSS to VDD). Output: 4-bit binary code DOUT[3:0]. No clock — purely combinational, continuous tracking. Use VDD/VSS power ports.",
       "expected_output": "A .va file with ANSI-inline or old-style port declarations compatible with Spectre, voltage normalization, integer quantization to 16 levels, bit extraction via shift/mask in genvar loop, transition() output with supply voltages. Reference: assets/examples-archive/adc-sar/_va_d2b_4b.va",
       "files": ["assets/examples-archive/adc-sar/_va_d2b_4b.va"]
+    },
+    {
+      "id": 28,
+      "name": "eval-no-runtime-indexed-bus-read",
+      "category": "DAC",
+      "domain": "voltage",
+      "prompt": "Write an 8-bit voltage-domain DAC that reads DIN[7:0] on RDY rising edge and updates VOUT. The model must target Cadence Spectre compatibility.",
+      "expected_output": "A .va file that does not use runtime-indexed electrical-bus reads such as V(DIN[i]) in procedural/event code. Spectre-safe solutions explicitly unroll the input-bit reads or restructure the code so electrical indexing stays constant.",
+      "files": []
     }
   ]
 }

@@ -25,8 +25,6 @@ module single_edge_sampler(
 
   real vout_real [10:0] ;
 
-  genvar i;
-
   analog begin
     @(initial_step) begin
       num_samples = 0;
@@ -41,20 +39,42 @@ module single_edge_sampler(
     end
 
     @(cross(V(clk)-vdd/2,direction)) begin
-     num_samples = num_samples+1;
-	$fwrite(file, "%g", $abstime);
-	 for(i=10;i>-1;i=i-1) begin
-      	vout_real[i] = V(vin[i]);
-      	if ((num_samples > num_skip_points) && file_io) begin
-          	$fwrite(file, ",%g",V(vin[i]));
-      		end
-		end
-	$fwrite(file, "\n");
+        num_samples = num_samples + 1;
+        vout_real[10] = V(vin[10]);
+        vout_real[9]  = V(vin[9]);
+        vout_real[8]  = V(vin[8]);
+        vout_real[7]  = V(vin[7]);
+        vout_real[6]  = V(vin[6]);
+        vout_real[5]  = V(vin[5]);
+        vout_real[4]  = V(vin[4]);
+        vout_real[3]  = V(vin[3]);
+        vout_real[2]  = V(vin[2]);
+        vout_real[1]  = V(vin[1]);
+        vout_real[0]  = V(vin[0]);
+
+        if ((num_samples > num_skip_points) && file_io) begin
+            $fwrite(file,
+                "%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\n",
+                $abstime,
+                vout_real[10], vout_real[9], vout_real[8], vout_real[7],
+                vout_real[6], vout_real[5], vout_real[4], vout_real[3],
+                vout_real[2], vout_real[1], vout_real[0]
+            );
+        end
     end 
 
-	for(i=0;i<11;i=i+1) begin
-    		V(vout[i]) <+ transition(vout_real[i], td, tr, tf);
-	end
+    V(vout[10]) <+ transition(vout_real[10], td, tr, tf);
+    V(vout[9])  <+ transition(vout_real[9],  td, tr, tf);
+    V(vout[8])  <+ transition(vout_real[8],  td, tr, tf);
+    V(vout[7])  <+ transition(vout_real[7],  td, tr, tf);
+    V(vout[6])  <+ transition(vout_real[6],  td, tr, tf);
+    V(vout[5])  <+ transition(vout_real[5],  td, tr, tf);
+    V(vout[4])  <+ transition(vout_real[4],  td, tr, tf);
+    V(vout[3])  <+ transition(vout_real[3],  td, tr, tf);
+    V(vout[2])  <+ transition(vout_real[2],  td, tr, tf);
+    V(vout[1])  <+ transition(vout_real[1],  td, tr, tf);
+    V(vout[0])  <+ transition(vout_real[0],  td, tr, tf);
+
     @(final_step) begin
       if (file_io) begin
         $fclose(file);
