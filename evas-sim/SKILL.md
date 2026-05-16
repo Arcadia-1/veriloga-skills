@@ -39,6 +39,11 @@ Read the `.va` file before simulating. If any unsupported pattern is found, stop
 | AC/DC analysis, transistors | not supported by design |
 | Spectre `subckt` hierarchy | not yet implemented |
 
+Important compatibility note:
+- EVAS acceptance is **not** the same as Spectre portability.
+- In particular, runtime-indexed analog-bus reads such as `V(DIN[i])` inside procedural code may run in EVAS and still fail in Spectre.
+- If the user targets Cadence/Spectre and that compiler is unavailable, say explicitly: `not Spectre-compiled`.
+
 ## Install
 
 ```bash
@@ -135,9 +140,12 @@ examples in this repo are the source of truth for structure and categorization.
 
 | File | Contents |
 |------|----------|
-| `tran.csv` | Time-domain waveforms; `time` in seconds, voltages in volts, bus codes as integers |
-| `strobe.txt` | `$strobe`/`$display` messages in time order |
-| `tran.png` | Auto-generated multi-panel waveform plot |
+| `tran.csv` | Guaranteed primary artifact. Time-domain waveforms; `time` in seconds, voltages in volts, bus codes as integers |
+| `strobe.txt` | Optional. Present when the run emits `$strobe`/`$display` messages |
+| `tran.png` | Optional. Plot generation may depend on EVAS build/runtime behavior |
+
+Treat `tran.csv` as the source of truth for post-processing. If `strobe.txt` or `tran.png`
+is absent, that is not by itself a simulation failure.
 
 ## Result processing
 
@@ -175,9 +183,13 @@ plt.show()
 
 ### Reading strobe output
 ```python
-with open("output/mydesign/strobe.txt") as f:
-    for line in f:
-        print(line, end="")
+from pathlib import Path
+
+strobe_path = Path("output/mydesign/strobe.txt")
+if strobe_path.exists():
+    with strobe_path.open() as f:
+        for line in f:
+            print(line, end="")
 ```
 
 ## Test file structure
@@ -273,7 +285,7 @@ tran tran stop=<end_time> errpreset=conservative
 ```
 - `errpreset=conservative` is the safe default for behavioural VA.
 - Choose `stop` to cover at least the settling time plus the measurement window.
-- Avoid `savetime` / `savefile` / `write` / `writefinal` - these are Spectre PSF keys; EVAS ignores them. EVAS output (tran.csv, strobe.txt, tran.png) is written to the directory set by `-o output/dir`.
+- Avoid `savetime` / `savefile` / `write` / `writefinal` - these are Spectre PSF keys; EVAS ignores them. EVAS writes output to the directory set by `-o output/dir`; treat `tran.csv` as the guaranteed primary artifact and `strobe.txt` / `tran.png` as optional.
 
 #### 7. `saveOptions` and explicit `save`
 ```spectre
@@ -311,3 +323,4 @@ Name files `tb_<scenario>.scs` (e.g., `tb_ramp.scs`, `tb_sine.scs`, `tb_offset_s
 | All voltages are 0 | Model uses `I() <+` - not supported |
 | `Compiled Verilog-A module` not printed | Parse error - check `ahdl_include` path in `.scs` |
 | Cross event fires twice at same timestep | Fixed in v0.3.0 - upgrade with `pip install -U evas-sim` |
+| EVAS passes but Spectre later rejects bus indexing | Remove runtime-indexed electrical-bus reads such as `V(DIN[i])` in procedural code; unroll them explicitly for Spectre-target flows |

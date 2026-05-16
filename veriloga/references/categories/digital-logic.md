@@ -193,6 +193,113 @@ Key points:
 - Bitwise AND on integer parameter selects each output bit
 - `transition()` on each bus element drives clean digital edges
 
+## Gray Counter
+
+A Gray counter should keep a normal binary counter internally, then encode the
+public outputs as `gray = binary ^ (binary >> 1)`. Incrementing the Gray word
+directly often breaks the one-bit-transition property.
+
+```
+integer bin_count;
+integer gray_count;
+genvar k;
+
+analog begin
+    @(initial_step) begin
+        bin_count = 0;
+        gray_count = 0;
+    end
+
+    @(cross(V(rst_i) - vth, +1)) begin
+        bin_count = 0;
+        gray_count = 0;
+    end
+
+    @(cross(V(clk_i) - vth, +1)) begin
+        if (V(rst_i) > vth) begin
+            bin_count = 0;
+        end else begin
+            bin_count = (bin_count + 1) % (1 << Nbits);
+        end
+        gray_count = bin_count ^ (bin_count >> 1);
+    end
+
+    for (k = 0; k < Nbits; k = k + 1)
+        V(gray_o[k]) <+ transition(((gray_count >> k) & 1) ? vh : vl, tdel, trise, tfall);
+end
+```
+
+## Serializer With Frame Alignment
+
+For parallel-to-serial blocks, latch the parallel word on the load-qualified
+clock edge, then shift exactly one bit per clock. If the prompt asks for a
+frame marker, assert it only for the first serialized bit of the loaded word.
+
+```
+integer word_q;
+integer bit_idx;
+integer sout_q;
+integer frame_q;
+
+analog begin
+    @(initial_step) begin
+        word_q = 0;
+        bit_idx = 0;
+        sout_q = 0;
+        frame_q = 0;
+    end
+
+    @(cross(V(clk_i) - vth, +1)) begin
+        if (V(load_i) > vth) begin
+            word_q = decoded_parallel_word;
+            bit_idx = Nbits - 1;       // MSB first
+            frame_q = 1;
+        end else begin
+            frame_q = 0;
+            if (bit_idx > 0)
+                bit_idx = bit_idx - 1;
+        end
+        sout_q = (word_q >> bit_idx) & 1;
+    end
+
+    V(sout_o)  <+ transition(sout_q ? vh : vl, tdel, trise, tfall);
+    V(frame_o) <+ transition(frame_q ? vh : vl, tdel, trise, tfall);
+end
+```
+
+## Parameterized Pulse Train
+
+When a task checks parameter overrides, declare the public parameter names
+exactly and let the instance line override them. The output behavior should
+depend on those parameters, not on hard-coded constants.
+
+```
+parameter real    vhi  = 0.5;
+parameter integer reps = 2;
+
+integer emitted;
+integer out_state;
+real t_next;
+
+analog begin
+    @(initial_step) begin
+        emitted = 0;
+        out_state = 0;
+        t_next = 1n;
+    end
+
+    @(timer(t_next)) begin
+        if (emitted < 2 * reps) begin
+            out_state = 1 - out_state;
+            emitted = emitted + 1;
+            t_next = t_next + 2n;
+        end
+    end
+
+    V(out) <+ transition(out_state ? vhi : 0.0, 0, trise, tfall);
+end
+```
+
 ## Design Notes
 
 - Digital logic in Verilog-A is behavioral — no gate-level synthesis

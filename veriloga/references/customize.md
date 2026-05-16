@@ -34,6 +34,39 @@ Propagation delay:  0         (ideal by default)
 
 ---
 
+## Split-Supply Control Mapping
+
+Use this section when a project separates digital/control supplies from analog-core
+supplies, for example `VDD/GND[0]` for logic/control and `VDD/GND[1]` for
+noise-sensitive analog behavior.
+
+Default project policy:
+
+```
+Control-threshold domain: digital/control supply
+Applies to: CLK, EN, AZ, reset, ready/handshake logic
+
+Analog-core domain: analog/noise-sensitive supply
+Applies to: preamp bias, integration, analog decision path, analog state referenced to the core
+```
+
+Recommended default mapping:
+
+- Threshold control signals such as `CLK`, `EN`, and `AZ` against the digital/control domain unless the top-level connectivity explicitly requires otherwise
+- Keep analog-sensitive core behavior referenced to the analog-core domain
+- If a block mixes the two domains, document the mapping inline in the module header comments
+
+Example naming convention:
+
+```
+VDD_DIG, VSS_DIG   -> control thresholds and digital outputs
+VDD_ANA, VSS_ANA   -> analog core behavior and analog comparisons
+```
+
+If your project uses a different convention, replace this section with the project-specific mapping and make that override authoritative.
+
+---
+
 ## File Header
 
 Template prepended to every generated .va file. Edit freely:

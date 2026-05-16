@@ -30,13 +30,17 @@ parameter real    vcm     = 0.45;       // output common-mode
 ### Combinational (continuously evaluates inputs)
 
 ```
+// Example shown for 4 bits. For wider buses, explicitly unroll the electrical-bus
+// reads in procedural code; do not use V(DIN[i]) with a runtime index.
 analog begin
     vh = V(VDD); vl = V(VSS);
-    lsb = (vh - vl) / (1 << Nbit);
+    lsb = (vh - vl) / 16.0;
 
     accum = 0.0;
-    for (i = 0; i < Nbit; i = i + 1)
-        accum = accum + ((V(DIN[i]) > vth) ? (1 << i) : 0);
+    if (V(DIN[0]) > vth) accum = accum + 1;
+    if (V(DIN[1]) > vth) accum = accum + 2;
+    if (V(DIN[2]) > vth) accum = accum + 4;
+    if (V(DIN[3]) > vth) accum = accum + 8;
 
     V(VOUT) <+ transition(vl + accum * lsb, tdc, tt);
 end
@@ -45,6 +49,7 @@ end
 ### Latching (updates on clock/strobe edge)
 
 ```
+// Example shown for 4 bits. Extend by explicitly unrolling each electrical-bit read.
 analog begin
     vh = V(VDD); vl = V(VSS);
     vth_clk = (vh + vl) / 2.0;
@@ -54,8 +59,10 @@ analog begin
 
     @(cross(V(RDY) - vth_clk, +1)) begin
         decimal = 0;
-        for (i = 0; i < Nbit; i = i + 1)
-            decimal = decimal + ((V(DIN[i]) > vth) ? (1 << i) : 0);
+        if (V(DIN[0]) > vth) decimal = decimal + 1;
+        if (V(DIN[1]) > vth) decimal = decimal + 2;
+        if (V(DIN[2]) > vth) decimal = decimal + 4;
+        if (V(DIN[3]) > vth) decimal = decimal + 8;
         held_value = vl + decimal * (vh - vl) / ((1 << Nbit) - 1);
     end
 
@@ -75,11 +82,91 @@ end
 
 // Accumulate charge on each strobe
 state = 0.0;
-for (i = 0; i < Nbit; i = i + 1)
-    state = state + Cw[i] / Ctotal * ((V(DIN[i]) > vth) ? 1.0 : 0.0);
+if (V(DIN[0]) > vth) state = state + Cw[0] / Ctotal;
+if (V(DIN[1]) > vth) state = state + Cw[1] / Ctotal;
+if (V(DIN[2]) > vth) state = state + Cw[2] / Ctotal;
+if (V(DIN[3]) > vth) state = state + Cw[3] / Ctotal;
 
 V(VOUT) <+ transition(state * (vrefp - vrefn) + vrefn, tdc, tt);
 ```
+
+### DWA / Thermometer Pointer (Spectre-safe shape)
+
+For DWA, use integer arrays for internal state and `genvar` for bus contributions.
+Read small input buses with fixed indices inside clock events.
+
+This is an instance of the generic multi-output transition target-buffer pattern:
+state/event code updates held real targets, and electrical contributions are
+unconditional at analog top level. The same pattern applies to any multi-output
+digital/analog driver, not only DWA.
+
+```
+integer ptr_q, code_q, j;
+real cell_en_val[15:0], ptr_val[15:0];
+genvar k;
+
+analog begin
+    @(initial_step) begin
+        ptr_q = 0;
+        for (j = 0; j < 16; j = j + 1) begin
+            cell_en_val[j] = 0.0;
+            ptr_val[j] = (j == ptr_q) ? vhi : vlo;
+        end
+    end
+
+    @(cross(V(CLK) - vth, +1)) begin
+        code_q = 0;
+        if (V(CODE[0]) > vth) code_q = code_q + 1;
+        if (V(CODE[1]) > vth) code_q = code_q + 2;
+        if (V(CODE[2]) > vth) code_q = code_q + 4;
+        if (V(CODE[3]) > vth) code_q = code_q + 8;
+
+        ptr_q = (ptr_q + code_q) % 16;
+        for (j = 0; j < 16; j = j + 1) begin
+            cell_en_val[j] = 0.0;
+            ptr_val[j] = (j == ptr_q) ? vhi : vlo;
+        end
+    end
+
+    for (k = 0; k < 16; k = k + 1) begin
+        V(CELL_EN[k]) <+ transition(cell_en_val[k], 0, tt, tt);
+        V(PTR[k]) <+ transition(ptr_val[k], 0, tt, tt);
+    end
+end
+```
+
+### Thermometer-Code DAC Count-To-Voltage
+
+Thermometer DACs should map the population count of active input cells to the
+analog output. Do not interpret thermometer inputs as a binary-weighted word.
+
+```
+integer count;
+real vout_target;
+
+analog begin
+    count = 0;
+    if (V(DIN0) > vth) count = count + 1;
+    if (V(DIN1) > vth) count = count + 1;
+    if (V(DIN2) > vth) count = count + 1;
+    if (V(DIN3) > vth) count = count + 1;
+    // Continue explicitly or use genvar/unrolled helpers for wider buses.
+
+    if (V(rst_n) < vth)
+        vout_target = 0.0;
+    else
+        vout_target = count * vstep;
+
+    V(VOUT) <+ transition(vout_target, 0, tt, tt);
+end
+```
+
+Key points:
+- Count asserted cells; do not use `DIN[k] * (1 << k)` for thermometer inputs.
+- Keep active-low reset released after startup if the checker observes settled
+  output levels.
+- If the prompt names scalar stimulus nodes such as `d0..d15`, keep those save
+  names visible even when the DUT uses an internal bus.
 
 ## Key Variables
 
@@ -97,3 +184,5 @@ V(VOUT) <+ transition(state * (vrefp - vrefn) + vrefn, tdc, tt);
 - Multiple `V(VOUT) <+` statements *add* contributions — useful for segmented DACs where
   each segment drives the same output node
 - For differential outputs: `VOUTP = vcm + signal/2`, `VOUTN = vcm - signal/2`
+- Spectre portability rule: do not use runtime-indexed electrical-bus reads such as
+  `V(DIN[i])` in procedural/event code; explicitly unroll or restructure them

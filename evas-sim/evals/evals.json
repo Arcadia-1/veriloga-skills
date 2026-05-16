@@ -9,7 +9,7 @@
         "Reads the .va file before attempting simulation",
         "Checks for unsupported constructs (I() <+, ddt, idt) before proceeding",
         "Provides evas simulate or evas run command",
-        "Explains output files: tran.csv, strobe.txt, tran.png"
+        "Explains that tran.csv is the primary artifact and strobe.txt / tran.png are optional outputs"
       ]
     },
     {
@@ -51,7 +51,7 @@
       "expectations": [
         "Recognizes this as an evas run command for the bundled clk_div example",
         "Explains where output goes: ./evas-run/output/clk_div/",
-        "Describes tran.csv and tran.png outputs"
+        "Describes tran.csv as the primary output and does not imply tran.png is always present"
       ]
     },
     {
@@ -78,6 +78,16 @@
       "prompt": "Simulate this Python code using pytest.",
       "expectations": [
         "Does not trigger evas-sim — this is about Python testing, not Verilog-A simulation"
+      ]
+    },
+    {
+      "id": 9,
+      "should_trigger": true,
+      "prompt": "This Verilog-A model passes EVAS, but it reads DIN[i] inside a procedural for-loop. Can I call it Spectre-compatible?",
+      "expectations": [
+        "Explains that EVAS success does not prove Spectre compatibility",
+        "Warns that runtime-indexed analog-bus reads like V(DIN[i]) may fail in Spectre",
+        "States clearly when the model is not Spectre-compiled"
       ]
     },
     {

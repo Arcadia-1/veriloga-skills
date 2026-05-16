@@ -89,6 +89,48 @@ Pipeline stages use MDAC (multiplying DAC) with sub-ADC:
 - Pass residue to next stage
 - Each stage has its own clock phase
 
+## System-Level Decomposition
+
+Do not treat an ADC prompt as one opaque behavior. Split it into mechanism
+blocks, then connect those blocks with observable relations:
+
+| Block | Typical observable | Contract-style check |
+|---|---|---|
+| Sample / hold | `vin_sh`, `clks`, `phi1`, `phi2` | The sample/update clock has edges; sampled value follows input at the requested phase |
+| Quantizer / flash sub-ADC | `DOUT[*]`, `dout_*`, `dout_code` | Codes cover the expected range and are not stuck |
+| SAR control | `DP_DAC[*]`, `DM_DAC[*]`, `CMPCK`, `RDY`, `EOC` | Bit trial/control signals move; ready/end flag asserts after conversion |
+| CDAC / DAC reconstruction | `vout`, `VDAC_P`, `VDAC_N` | Output span is non-trivial and matches the same bit order/reference as the code |
+| Pipeline residue / MDAC | `vres`, `residue` | Residue changes across decision regions and stays bounded |
+| Calibration / trim | `TRIM_code`, `CAL*`, trim buses | Trim/control code converges or at least moves under the calibration stimulus |
+
+For an ADC-DAC round trip, the useful chain is:
+
+```
+sample clock -> sampled input -> quantizer code -> DAC reconstruction
+```
+
+The repair loop should therefore look at a vector of mechanism failures:
+missing clock edges, stuck code, wrong bit order, wrong reference scale,
+flat reconstruction output, missing ready flag, flat residue, or static
+calibration control. This is more useful than a single note such as "ADC
+failed", because it points to the broken internal relation.
+
+### Gold-Derived Robustness Lessons
+
+Gold sweeps should be non-mutating: copy the gold testbench/DUT to a result
+folder, perturb public stimulus parameters, and record the mechanism metrics.
+For `sar_adc_dac_weighted_8b_smoke`, sweeping input sine frequency showed:
+
+- `fin=50k..500k` passes the existing checker.
+- Code coverage drops from 224 unique codes at `100k` to 57 at `500k`.
+- Average reconstruction error rises from about `2.2mV` to `8.2mV`.
+- `fin=1M` became a timeout/error boundary in the local EVAS run, with only
+  partial metrics available.
+
+This tells the generator that input speed versus sampling cadence is part of
+the ADC contract. A repair that only toggles outputs is not enough; it must
+preserve sampling phase, bit order, reference scale, and reconstruction timing.
+
 ## Design Notes
 
 - SAR modules often have multiple clock domains (sample clock, comparator clock, main clock)

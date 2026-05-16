@@ -69,15 +69,21 @@ module dac_reconstructor(VDD, VSS, DIN, VOUT);
     parameter integer Nbits = 8;
 
     real vh, vl, accum, lsb;
-    genvar i;
 
     analog begin
         vh = V(VDD); vl = V(VSS);
         lsb = (vh - vl) / (1 << Nbits);
 
         accum = 0.0;
-        for (i = 0; i < Nbits; i = i + 1)
-            accum = accum + ((V(DIN[i]) > vth) ? (1 << i) : 0);
+        // Explicit unrolling is Spectre-safe. Do not use V(DIN[i]) with a runtime index.
+        if (V(DIN[0]) > vth) accum = accum + 1;
+        if (V(DIN[1]) > vth) accum = accum + 2;
+        if (V(DIN[2]) > vth) accum = accum + 4;
+        if (V(DIN[3]) > vth) accum = accum + 8;
+        if (V(DIN[4]) > vth) accum = accum + 16;
+        if (V(DIN[5]) > vth) accum = accum + 32;
+        if (V(DIN[6]) > vth) accum = accum + 64;
+        if (V(DIN[7]) > vth) accum = accum + 128;
 
         V(VOUT) <+ vl + accum * lsb;
     end
@@ -174,6 +180,11 @@ Xstim (clock, stimulus_out, VDD, VSS) stimulus_driver trise=5p tfall=5p
 - **Threshold detection** — always use `(vh + vl) / 2.0` for digital thresholds
 - **No `transition()` in probes** — only in drivers/stimulus (probes are read-only)
 - **Vector support** — use `[N:0]` for multi-bit buses and `genvar` for loops
+
+---
+
+- **Spectre portability** 鈫?runtime-indexed electrical-bus reads such as `V(DIN[i])` are unsafe in
+  procedural code; unroll them explicitly
 
 ---
 

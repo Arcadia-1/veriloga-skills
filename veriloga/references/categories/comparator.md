@@ -94,6 +94,65 @@ V(DOUT) <+ transition((vdiff > 0) ? vh : vl, td_cmp, tedge, tedge);
 end
 ```
 
+### Split-Supply Control vs Core Mapping
+
+When a project uses separate control and analog-core supplies, use the control
+domain for thresholding digital-like control pins and the analog-core domain for
+the comparator's analog behavior, unless project customization says otherwise.
+
+```verilog
+module comp_split_supply (
+    input  electrical CLK,
+    input  electrical EN,
+    input  electrical AZ,
+    input  electrical VINP,
+    input  electrical VINN,
+    inout  electrical VDD_DIG,
+    inout  electrical VSS_DIG,
+    inout  electrical VDD_ANA,
+    inout  electrical VSS_ANA,
+    output electrical OUTP,
+    output electrical OUTN
+);
+
+real vh_dig, vl_dig, vth_ctrl;
+real vh_ana, vl_ana;
+integer outp_q, outn_q;
+
+analog begin
+    vh_dig = V(VDD_DIG); vl_dig = V(VSS_DIG);
+    vh_ana = V(VDD_ANA); vl_ana = V(VSS_ANA);
+    vth_ctrl = (vh_dig + vl_dig) / 2.0;
+
+    @(initial_step) begin
+        outp_q = 0;
+        outn_q = 0;
+    end
+
+    @(cross(V(CLK) - vth_ctrl, +1)) begin
+        if ((V(EN) > vth_ctrl) && (V(AZ) < vth_ctrl)) begin
+            if ((V(VINP) - V(VINN)) > 0.0) begin
+                outp_q = 1;
+                outn_q = 0;
+            end else begin
+                outp_q = 0;
+                outn_q = 1;
+            end
+        end
+    end
+
+    V(OUTP) <+ transition(outp_q ? vh_dig : vl_dig, 0, tedge, tedge);
+    V(OUTN) <+ transition(outn_q ? vh_dig : vl_dig, 0, tedge, tedge);
+end
+endmodule
+```
+
+Default policy:
+
+- `CLK`, `EN`, `AZ`, reset, and ready/handshake thresholds use the digital/control domain
+- Analog comparison and analog bias/state reference the analog-core domain
+- If top-level wiring intentionally uses a different threshold domain, follow the wiring and document the exception
+
 ## Design Notes
 
 - Always provide complementary outputs (DCMPP/DCMPN) — SAR logic needs both
@@ -103,3 +162,4 @@ end
 - For StrongARM: propagation delay is input-dependent in real circuits; for behavioral
   model, a fixed `td_cmp` parameter is usually sufficient
 - Output is differential and rail-to-rail (swings between VDD and VSS)
+- For split-supply projects, threshold control pins with the digital/control domain by default and keep the analog decision path on the analog-core domain unless `customize.md` overrides that policy
