@@ -1,0 +1,15 @@
+// bootstrap_nol: Bootstrap non-overlap control outputs with dead time
+simulator lang=spectre
+global 0
+
+ahdl_include "bootstrap_nol.va"
+
+Vclkd (CLKD 0) vsource type=pulse val0=0 val1=0.9 period=10n delay=1n rise=20p fall=20p width=5n
+Vrst_n (RST_N 0) vsource type=pwl \
+        wave=[0 0  2.45n 0  2.50n 0.9  120n 0.9]
+
+IDUT (CLKD RST_N GATE GATE_B EN_DAC) bootstrap_nol \
+    vdd=0.9 vth=0.45 t_nol=200p en_dac_on_hold=1
+
+tran tran stop=120n maxstep=10p
+save CLKD:2e RST_N:2e GATE:2e GATE_B:2e EN_DAC:2e

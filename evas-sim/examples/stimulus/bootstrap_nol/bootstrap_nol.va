@@ -1,0 +1,86 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+`default_transition 20p
+
+// Bootstrap non-overlap control example.
+// GATE turns on during CLKD high after a dead time t_nol.
+// GATE_B turns on during CLKD low after the same dead time.
+// EN_DAC follows either the hold phase (GATE_B) or the track phase (GATE).
+
+module bootstrap_nol (
+    input  electrical CLKD,
+    input  electrical RST_N,
+    output electrical GATE,
+    output electrical GATE_B,
+    output electrical EN_DAC
+);
+
+parameter real vdd = 0.9;
+parameter real vth = 0.45;
+parameter real t_nol = 200p;
+parameter real trise = 20p;
+parameter real tfall = 20p;
+parameter integer en_dac_on_hold = 1;
+
+real t_rise;
+real t_fall;
+integer clk_hi_q;
+integer rst_ok_q;
+integer gate_q;
+integer gate_b_q;
+integer en_dac_q;
+real gate_target;
+real gate_b_target;
+real en_dac_target;
+
+analog begin
+    @(initial_step) begin
+        clk_hi_q = 0;
+        rst_ok_q = 0;
+        t_rise = 0.0;
+        t_fall = 0.0;
+    end
+
+    @(cross(V(RST_N) - vth, +1)) begin
+        rst_ok_q = 1;
+        if (clk_hi_q)
+            t_rise = $abstime;
+        else
+            t_fall = $abstime;
+    end
+
+    @(cross(V(RST_N) - vth, -1)) begin
+        rst_ok_q = 0;
+        clk_hi_q = 0;
+        t_rise = $abstime;
+        t_fall = $abstime;
+    end
+
+    @(cross(V(CLKD) - vth, +1)) begin
+        if (rst_ok_q) begin
+            clk_hi_q = 1;
+            t_rise = $abstime;
+        end
+    end
+
+    @(cross(V(CLKD) - vth, -1)) begin
+        if (rst_ok_q) begin
+            clk_hi_q = 0;
+            t_fall = $abstime;
+        end
+    end
+
+    gate_q   = rst_ok_q && clk_hi_q && (($abstime - t_rise) >= t_nol);
+    gate_b_q = rst_ok_q && !clk_hi_q && (($abstime - t_fall) >= t_nol);
+    en_dac_q = en_dac_on_hold ? gate_b_q : gate_q;
+
+    gate_target   = gate_q   ? vdd : 0.0;
+    gate_b_target = gate_b_q ? vdd : 0.0;
+    en_dac_target = en_dac_q ? vdd : 0.0;
+    V(GATE)   <+ transition(gate_target,   0, trise, tfall);
+    V(GATE_B) <+ transition(gate_b_target, 0, trise, tfall);
+    V(EN_DAC) <+ transition(en_dac_target, 0, trise, tfall);
+end
+
+endmodule

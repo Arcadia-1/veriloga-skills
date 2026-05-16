@@ -81,6 +81,71 @@ analog begin
 end
 ```
 
+## Bootstrap Driver With Non-Overlap Outputs
+
+For bootstrap/NOL control paths, prefer state/timestamp-based gating over `@(timer(...))`
+edge scheduling. Timer chains may compile but leave one phase stuck or mis-ordered in
+event-driven simulators.
+
+```
+parameter real t_nol = 200e-12;
+parameter real trise = 20e-12;
+parameter real tfall = 20e-12;
+parameter integer en_dac_on_hold = 1;
+
+real vh, vl, vth;
+real t_rise, t_fall;
+integer clk_hi, rst_ok;
+integer gate_q, gate_b_q, en_dac_q;
+
+analog begin
+    vh = V(VDD); vl = V(VSS);
+    vth = (vh + vl) / 2.0;
+
+    @(initial_step) begin
+        clk_hi = 0;
+        rst_ok = 0;
+        t_rise = 0.0;
+        t_fall = 0.0;
+    end
+
+    @(cross(V(RST_N) - vth, +1)) begin
+        rst_ok = 1;
+        if (clk_hi) t_rise = $abstime;
+        else        t_fall = $abstime;
+    end
+
+    @(cross(V(RST_N) - vth, -1)) begin
+        rst_ok = 0;
+        clk_hi = 0;
+        t_rise = $abstime;
+        t_fall = $abstime;
+    end
+
+    @(cross(V(CLKD) - vth, +1)) begin
+        if (rst_ok) begin
+            clk_hi = 1;
+            t_rise = $abstime;
+        end
+    end
+
+    @(cross(V(CLKD) - vth, -1)) begin
+        if (rst_ok) begin
+            clk_hi = 0;
+            t_fall = $abstime;
+        end
+    end
+
+    gate_q   = rst_ok && clk_hi && (($abstime - t_rise) >= t_nol);
+    gate_b_q = rst_ok && !clk_hi && (($abstime - t_fall) >= t_nol);
+    en_dac_q = en_dac_on_hold ? gate_b_q : gate_q;
+
+    V(GATE)   <+ transition(gate_q   ? vh : vl, 0, trise, tfall);
+    V(GATE_B) <+ transition(gate_b_q ? vh : vl, 0, trise, tfall);
+    V(EN_DAC) <+ transition(en_dac_q ? vh : vl, 0, trise, tfall);
+end
+```
+
 ## Switched-Capacitor Integrator
 
 ```
@@ -126,5 +191,8 @@ end
 - `transition()` on the resistance itself (not just the output) prevents instantaneous
   impedance jumps that cause convergence failures
 - For charge injection modeling: add a small capacitor from control to signal path
+- For non-overlap outputs (`GATE`, `GATE_B`, `EN_DAC`), validate waveforms dynamically:
+  do not stop at syntax/compile success; confirm every output toggles and the both-low
+  window matches `t_nol`
 - ESD models use `$abstime` and exponential decay for human body / machine / charged
   device model waveforms — these are specialized and rarely needed in standard design

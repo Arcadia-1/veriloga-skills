@@ -252,6 +252,15 @@
       "prompt": "Write an 8-bit voltage-domain DAC that reads DIN[7:0] on RDY rising edge and updates VOUT. The model must target Cadence Spectre compatibility.",
       "expected_output": "A .va file that does not use runtime-indexed electrical-bus reads such as V(DIN[i]) in procedural/event code. Spectre-safe solutions explicitly unroll the input-bit reads or restructure the code so electrical indexing stays constant.",
       "files": []
+    },
+    {
+      "id": 29,
+      "name": "eval-bootstrap-nol",
+      "category": "Power/Switch",
+      "domain": "voltage",
+      "prompt": "Create a bootstrap non-overlap controller with inputs CLKD and RST_N, outputs GATE, GATE_B, and EN_DAC. GATE and GATE_B must be complementary with dead time t_nol, and EN_DAC should follow the hold phase by default.",
+      "expected_output": "A .va file that initializes cleanly in @(initial_step), avoids timer-chain edge scheduling, and generates GATE/GATE_B/EN_DAC so each output toggles and the both-low window equals t_nol in transient verification.",
+      "files": []
     }
   ]
 }

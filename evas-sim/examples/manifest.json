@@ -77,6 +77,13 @@
     "focus": "burst-clock stimulus generation"
   },
   {
+    "name": "bootstrap_nol",
+    "category": "stimulus",
+    "path": "evas-sim/examples/stimulus/bootstrap_nol",
+    "default_testbench": "tb_bootstrap_nol.scs",
+    "focus": "bootstrap non-overlap control waveform validation"
+  },
+  {
     "name": "noise_gen",
     "category": "stimulus",
     "path": "evas-sim/examples/stimulus/noise_gen",

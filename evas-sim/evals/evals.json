@@ -79,6 +79,16 @@
       "expectations": [
         "Does not trigger evas-sim — this is about Python testing, not Verilog-A simulation"
       ]
+    },
+    {
+      "id": 10,
+      "should_trigger": true,
+      "prompt": "My bootstrap non-overlap model compiles in EVAS. Is compile success enough?",
+      "expectations": [
+        "Says no - dynamic waveform validation is still required",
+        "Checks that GATE, GATE_B, and EN_DAC all toggle",
+        "Mentions verifying the both-low dead-time window against t_nol"
+      ]
     }
   ]
 }

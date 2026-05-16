@@ -24,6 +24,10 @@ Examples are grouped by verification intent first, not by PyPI packaging:
 - `stimulus/` - reusable source/stimulus examples
 - `measurement/` - measurement/extraction flows
 
+The stimulus set includes a bootstrap/non-overlap control example with waveform
+validation so dead-time regressions are caught at the CSV-check stage, not only
+at parse/compile time.
+
 ## Layout
 
 Each example directory may contain:
