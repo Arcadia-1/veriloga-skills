@@ -110,6 +110,9 @@ Do not browse the full `assets/examples/` tree by default.
 - Supplemental only: `signal-source/`, `measurement-helpers/`, and helper-heavy calibration patterns
 
 If the request matches a common DUT category, stay within the core set unless it is clearly insufficient.
+When you must consult `assets/examples-archive/`, treat it as legacy reference material and run
+`references/check_spectre_portability.py` before copying any electrical-bus read pattern into a
+Spectre-target design.
 
 ---
 
@@ -195,13 +198,20 @@ input electrical CLK_0, CLK_1, CLK_2, ..., CLK_31;        // Hard to maintain
 ```verilog
 genvar ch;
 
+real out_target;
+
 analog begin
+    // Constant/genvar indexing is fine for repeated analog contributions.
     for (ch = 0; ch < 32; ch = ch + 1) begin
-        code[ch] = V(data_i[ch]);          // Access channel ch
-        sync[ch] = V(clk_i[ch]);           // Clock for channel ch
+        out_target = sampled_val[ch] ? vh : vl;
+        V(sampled_o[ch]) <+ transition(out_target, 0, trise, tfall);
     end
 end
 ```
+
+For procedural/event code, do **not** read an electrical bus with a runtime loop index such as
+`V(data_i[i])` inside `@(cross(...))` or `@(initial_step)`. Spectre often rejects that pattern even
+when EVAS accepts it.
 
 ---
 
@@ -262,6 +272,11 @@ This is a major Spectre portability pitfall.
 - Do **not** use an `integer` loop variable to index an electrical bus in expressions like
   `V(code_i[k])` or `I(bus[k])` inside procedural code; Spectre often rejects this. Unroll the bus
   access explicitly or restructure the code.
+- EVAS may still compile some of these runtime-indexed bus reads. Treat EVAS success as an EVAS-only
+  result, not as proof of Spectre portability.
+- If Spectre is unavailable, run
+  `python veriloga/references/check_spectre_portability.py path/to/file.va`
+  and explicitly state that the model was **not Spectre-compiled**.
 
 **Correct - `integer` for runtime/procedural loops:**
 ```verilog
@@ -345,6 +360,39 @@ Use a temporary variable and assign once.
 **Project style rule:** even if some simulators accept more compact expressions, benchmark gold and
 first-pass authored DUTs should prefer the explicit target-variable form above. It is easier to
 audit and keeps EVAS / Spectre authoring style aligned.
+
+**Multi-output corollary — target-buffer pattern:** for multiple transition-driven
+outputs, do not put `transition()` inside `if`/`case`/runtime `for` branches.
+Declare one target per output, or a `real target[0:N-1]` array. Update only those
+targets inside events and conditions. Put the electrical contributions at analog
+top level:
+
+```verilog
+real out_t[0:3];
+integer j;
+genvar k;
+
+analog begin
+    @(initial_step) begin
+        for (j = 0; j < 4; j = j + 1) out_t[j] = vlo;
+    end
+
+    @(cross(V(clk) - vth, +1)) begin
+        out_t[0] = state0 ? vhi : vlo;
+        out_t[1] = state1 ? vhi : vlo;
+        out_t[2] = state2 ? vhi : vlo;
+        out_t[3] = state3 ? vhi : vlo;
+    end
+
+    for (k = 0; k < 4; k = k + 1) begin
+        V(out[k]) <+ transition(out_t[k], 0, tr, tf);
+    end
+end
+```
+
+If a simulator or benchmark port style makes `genvar` inconvenient, explicitly
+unroll the contribution lines. The important rule is that the `transition()`
+contributions are unconditional and outside runtime `integer` loops.
 
 ---
 
@@ -698,6 +746,9 @@ Delegate to `openvaf` skill: compile check → load check → tran sanity.
 Use EVAS for local simulation when the CLI is installed/configured.
 If EVAS is unavailable in the current environment, fall back to a static
 compatibility check against `evas-capabilities.manifest`.
+If EVAS passes but Spectre is unavailable, also run the Spectre portability check
+at `references/check_spectre_portability.py` and state clearly that the result is
+"EVAS-validated, not Spectre-compiled".
 
 ### Mixed-domain
 Do not attempt. Refer to `domain-routing.md § Mixed`.
