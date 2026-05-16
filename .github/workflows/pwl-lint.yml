@@ -1,4 +1,4 @@
-name: PWL Lint
+name: Static Lints
 
 on:
   push:
@@ -22,5 +22,5 @@ jobs:
       - name: Install test dependency
         run: python -m pip install pytest
 
-      - name: Run Spectre-safe PWL lint
-        run: python -m pytest -q tests/test_pwl_statements.py
+      - name: Run static lint tests
+        run: python -m pytest -q tests

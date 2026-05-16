@@ -96,6 +96,75 @@ end
 This pattern is usually easier to align between EVAS and Spectre than direct phase integration.
 It also avoids one-edge-late period application when the oscillation period changes over time.
 
+## Differential VCO Output Topology
+
+Do not over-constrain a differential VCO output with three independent ideal
+voltage branches. Spectre treats these as ideal branch equations, so this shape
+can create a rigid-branch topology fatal even when EVAS accepts it:
+
+```verilog
+// Unsafe: OUTP, OUTN, and VSS are tied by three ideal voltage constraints.
+V(OUTP, VSS) <+ vcm + vdiff;
+V(OUTN, VSS) <+ vcm - vdiff;
+V(OUTP, OUTN) <+ 2.0 * vdiff + noise_v;
+```
+
+General rule: if two pin pairs already share a reference, such as
+`OUTP-VSS` and `OUTN-VSS`, do not add a third ideal `V(OUTP, OUTN) <+`
+constraint across the same two output pins. Add differential perturbations to
+the existing output targets before the single-ended contributions, or use a
+current-domain perturbation path.
+
+Preferred shapes:
+
+```verilog
+// Voltage-domain target style: add perturbation before the two output drives.
+outp_target = vcm + vdiff + 0.5 * noise_v;
+outn_target = vcm - vdiff - 0.5 * noise_v;
+V(OUTP, VSS) <+ transition(outp_target, 0, tedge, tedge);
+V(OUTN, VSS) <+ transition(outn_target, 0, tedge, tedge);
+```
+
+```verilog
+// Current-domain style: inject differential noise without an ideal voltage loop.
+I(OUTP, OUTN) <+ noise_i;
+```
+
+For finite-output-impedance models, use a Norton-style path with conductance
+and current injection rather than a third ideal differential voltage source.
+EVAS does not solve the same KCL/KVL topology as Spectre, so EVAS-only passing
+does not prove that an ideal voltage-branch topology is Spectre-portable.
+
+## Monitor Node Unit Discipline
+
+Monitor pins are voltages. Do not drive a monitor node with an unscaled physical
+quantity whose numeric value is far outside a reasonable voltage range. A common
+failure is:
+
+```verilog
+// Unsafe at GHz operation: this drives about 1e9 V onto freq_mon.
+V(freq_mon) <+ freq;
+```
+
+Use an explicit scale parameter so the monitor voltage has documented units:
+
+```verilog
+parameter real freq_mon_scale = 1e-9;  // GHz on freq_mon
+V(freq_mon) <+ freq * freq_mon_scale;
+```
+
+Apply the same discipline to other PLL monitors:
+
+- Frequency monitors: scale Hz to GHz/MHz/kHz on the voltage node.
+- Phase monitors: document rad-to-V scaling, for example `phase_mon_scale`.
+- Control-voltage monitors: no scale is needed when the state is already volts.
+- Divider-ratio or code monitors: dimensionless values may be driven directly
+  only when their range is small; otherwise add a scale parameter.
+
+Passing in EVAS is not enough for monitor nodes because EVAS may not expose DC
+or initial-condition blowup the way Spectre does. If a monitor can reach
+hundreds of volts or more, scale it before using it as a voltage contribution.
+
 ## Frequency Divider
 
 ```

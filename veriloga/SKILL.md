@@ -652,6 +652,28 @@ compile / execution gates only:
 }
 ```
 
+### Requirement-to-code checklist
+
+For benchmark or eval-style DUT generation, the final assistant response must
+include an explicit coverage checklist that maps each prompt requirement to the
+generated code location. Use file/line references when available, or a precise
+identifier when line numbers are not available yet.
+
+The checklist must cover at least:
+
+- Required ports and bus widths
+- Required public parameters
+- Reset, lock, ready, or end-of-conversion behavior
+- Noise, jitter, mismatch, or monitor behavior named in the prompt
+- `$bound_step()` or equivalent timestep control for oscillator/source tasks
+- `idt()` / `idtmod()` acceptance or rejection under `references/evas-parity-gate.md`
+
+Do not summarize this as "all requirements implemented." If a prompt item is
+intentionally not implemented, mark it as not applicable or deferred and give
+the simulator/parity reason. Before finalizing a benchmark answer, re-read the
+prompt/eval metadata and confirm the signature items above are visible in the
+code or explicitly rejected by the domain-routing rules.
+
 ---
 
 ## Simulation Routing
