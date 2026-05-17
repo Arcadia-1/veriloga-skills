@@ -49,7 +49,7 @@ Important compatibility note:
 ```bash
 uv tool install evas-sim  # preferred CLI install
 pip install evas-sim      # fallback if using a virtualenv
-evas list                 # verify CLI install; current v0.4.3 prints 14 bundled groups
+evas list                 # verify CLI install; current EVAS main prints 5 bundled groups
 ```
 
 If `evas` is not found after install, use `python -m evas` or check virtualenv activation.
@@ -121,9 +121,10 @@ Use the local repository example library as the primary reference:
 - `examples/README.md`
 - `examples/manifest.json`
 
-The current `evas-sim` PyPI release (`0.4.3`) still bundles 14 runnable example
-groups for smoke testing via `evas list` / `evas run`, but the skill-owned
-examples in this repo are the source of truth for structure and categorization.
+The `evas-sim` PyPI package bundles only a compact smoke-test demo set for
+`evas list` / `evas run`. The full 14-group runnable example library in this
+repo is the source of truth for structure, categorization, and agent workflow
+references.
 
 ### Local categories
 
