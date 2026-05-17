@@ -13,14 +13,11 @@ Figure 2 (sine input, first 3 post-reset cycles):
   middle dout_code
   bottom quantisation error (mV)
 """
+import re
 import time
 from pathlib import Path
 
-import matplotlib
 import numpy as np
-
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 from evas.netlist.runner import evas_simulate
 
@@ -73,13 +70,34 @@ def validate_csv(out_dir=None):
         print("FAIL: dout_code has non-integer values")
         failures += 1
 
-    # 截断型 ADC：采样时刻误差应在 (-LSB, 0]，|误差| < 1 LSB
-    # 用 code×VSTEP 代替 vout，避免 DAC transition 延迟引入的误差
-    code_int = np.round(code).astype(int)
-    sample_mask = np.concatenate(([True], np.diff(code_int) != 0))
-    vin_s  = vin[sample_mask]
-    code_s = code_int[sample_mask]
-    q_err  = code_s * VSTEP - vin_s   # 截断型：应在 (-LSB, 0]
+    # Truncating ADC: quantisation error at sample instants must be in (-LSB, 0], |error| < 1 LSB.
+    # Prefer strobe sampling (discrete ADC events) to avoid transition-edge ambiguity.
+    vin_s = None
+    code_s = None
+    strobe_path = out_dir / 'strobe.txt'
+    if strobe_path.exists():
+        pattern = re.compile(r'\[adc_ideal_4b\]\s*t=([0-9.]+) ns \| vin=([0-9.eE+\-]+) \| code=(\d+)')
+        strobe_samples = []
+        for line in strobe_path.read_text().splitlines():
+            m = pattern.search(line)
+            if not m:
+                continue
+            t_ns = float(m.group(1))
+            if t_ns <= RST_END_SINE_NS:
+                continue
+            strobe_samples.append((float(m.group(2)), int(m.group(3))))
+        if len(strobe_samples) >= 8:
+            vin_s = np.array([v for v, _ in strobe_samples], dtype=float)
+            code_s = np.array([c for _, c in strobe_samples], dtype=int)
+
+    if vin_s is None or code_s is None:
+        # Fallback: infer sample points from code updates in CSV.
+        code_int = np.round(code).astype(int)
+        sample_mask = np.concatenate(([True], np.diff(code_int) != 0))
+        vin_s = vin[sample_mask]
+        code_s = code_int[sample_mask]
+
+    q_err  = code_s * VSTEP - vin_s   # truncating ADC: should be in (-LSB, 0]
     if q_err.max() > 1e-6:
         print(f"FAIL: q_error > 0 at sample instants (max = {q_err.max()*1e3:.2f} mV), expected truncation ≤ 0")
         failures += 1
@@ -93,6 +111,10 @@ def validate_csv(out_dir=None):
 # ── Standalone: simulate + plot ───────────────────────────────────────────────
 
 if __name__ == '__main__':
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
     OUT_RAMP      = OUT / 'ramp'
     OUT_SINE      = OUT / 'sine'
     OUT_SINE1000  = OUT / 'sine1000'

@@ -1,6 +1,3 @@
-`include "constants.vams"
-`include "disciplines.vams"
-
 module dac_therm_16b (
     input  electrical [15:0] din_therm,
     input  electrical        rst_n,

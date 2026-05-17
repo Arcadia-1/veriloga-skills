@@ -22,17 +22,21 @@ def validate_csv(out_dir: Path = OUT) -> int:
     failures = 0
 
     t_ns = data['time'] * 1e9
+    names = list(data.dtype.names)
 
-    # Decode 12-bit code
-    code_cols = [f'code_{i}' for i in range(12)]
-    available = [c for c in code_cols if c in list(data.dtype.names)]
-    if not available:
-        print("FAIL: no code_* columns found")
-        return 1
-
-    ramp_code = np.zeros(len(data), dtype=int)
-    for i, col in enumerate(available):
-        ramp_code += ((data[col] > 0.45).astype(int) << i)
+    # Prefer scalar code output when present; bit-level threshold decoding can
+    # show transient glitches during transition() edges.
+    if 'code_code' in names:
+        ramp_code = np.round(data['code_code']).astype(int)
+    else:
+        code_cols = [f'code_{i}' for i in range(12)]
+        available = [c for c in code_cols if c in names]
+        if not available:
+            print("FAIL: no code_* columns found")
+            return 1
+        ramp_code = np.zeros(len(data), dtype=int)
+        for i, col in enumerate(available):
+            ramp_code += ((data[col] > 0.45).astype(int) << i)
 
     # After startup (t > 400ns), code should be > 0
     active_mask = t_ns > 400.0
