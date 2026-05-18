@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280" role="img" aria-label="veriloga-skills">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#161b22"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#58a6ff"/>
+      <stop offset="0.5" stop-color="#bc8cff"/>
+      <stop offset="1" stop-color="#f78166"/>
+    </linearGradient>
+    <style>
+      .wm { font-family: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-weight: 800; letter-spacing: -1.5px; fill: #e6edf3; }
+      .sub { font-family: ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+             font-weight: 400; fill: #8b949e; }
+      .va  { font-family: "SF Mono", "JetBrains Mono", "Fira Code", monospace; font-size: 16px; }
+      .kw  { fill: #bc8cff; }
+      .fn  { fill: #58a6ff; }
+      .str { fill: #3fb950; }
+      .cmt { fill: #6e7681; }
+      .id  { fill: #e6edf3; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="280" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="3" fill="url(#accent)"/>
+
+  <!-- left-side decorative Verilog-A snippet -->
+  <g opacity="0.55" transform="translate(48, 60)">
+    <text class="va cmt" y="0">// VCO behavioral core</text>
+    <text class="va" y="24"><tspan class="kw">module</tspan> <tspan class="fn">vco</tspan>(<tspan class="id">VCTR</tspan>, <tspan class="id">OUTP</tspan>, <tspan class="id">OUTN</tspan>);</text>
+    <text class="va" y="48"><tspan class="kw">analog</tspan> <tspan class="kw">begin</tspan></text>
+    <text class="va" y="72">  freq = f0 + Kvco * <tspan class="fn">V</tspan>(VCTR);</text>
+    <text class="va" y="96">  phase = <tspan class="fn">idtmod</tspan>(2*`M_PI*freq, 0, 2*`M_PI);</text>
+    <text class="va" y="120">  <tspan class="fn">V</tspan>(OUTP, OUTN) &lt;+ amp * <tspan class="fn">sin</tspan>(phase);</text>
+    <text class="va" y="144">  <tspan class="fn">$bound_step</tspan>(0.1 / freq);</text>
+    <text class="va" y="168"><tspan class="kw">end</tspan></text>
+    <text class="va" y="192"><tspan class="kw">endmodule</tspan></text>
+  </g>
+
+  <!-- wordmark + subtitle right side -->
+  <g transform="translate(720, 130)">
+    <text class="wm" font-size="72">veriloga-<tspan fill="#bc8cff">skills</tspan></text>
+    <text class="sub" font-size="20" y="44">Agent skills for Verilog-A behavioral modeling</text>
+    <text class="sub" font-size="16" y="74" opacity="0.8">Cadence Virtuoso / Spectre conventions, 1,809-design distilled</text>
+  </g>
+</svg>
