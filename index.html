@@ -49,7 +49,10 @@
       padding: 18px;
     }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-    @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+      table { display: block; max-width: 100%; overflow-x: auto; }
+    }
     .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.9rem; text-align: center; color: var(--muted); }
   </style>
 </head>
@@ -122,8 +125,8 @@
       <p>The clone command below is only a copy/install method. It is not a runtime dependency of
       the <code>veriloga</code> skill after the folder has been copied.</p>
       <pre><code>git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills /tmp/veriloga-skills
-mkdir -p .codex/skills
-cp -r /tmp/veriloga-skills/veriloga .codex/skills/</code></pre>
+mkdir -p .agents/skills
+cp -r /tmp/veriloga-skills/veriloga .agents/skills/</code></pre>
     </section>
 
     <div class="footer">

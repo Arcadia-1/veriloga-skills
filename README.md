@@ -35,8 +35,8 @@ skill:
 
 ```bash
 git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills /tmp/veriloga-skills
-mkdir -p .codex/skills
-cp -r /tmp/veriloga-skills/veriloga .codex/skills/
+mkdir -p .agents/skills
+cp -r /tmp/veriloga-skills/veriloga .agents/skills/
 ```
 
 The clone command is only a copy/install method. Once `veriloga/` is copied, the skill has no

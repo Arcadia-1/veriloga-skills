@@ -84,6 +84,19 @@ def test_index_local_links_exist() -> None:
         assert (ROOT / href).exists(), href
 
 
+def test_repository_docs_match_standalone_skill_installation() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    index = (ROOT / "index.html").read_text(encoding="utf-8")
+    banner = (ROOT / "assets" / "banner.svg").read_text(encoding="utf-8").lower()
+
+    for text in [readme, index]:
+        assert ".agents/skills" in text
+        assert ".codex/skills" not in text
+
+    for stale_term in ["cadence", "spectre", "1,809"]:
+        assert stale_term not in banner
+
+
 def test_references_are_one_level_deep_and_linked_from_skill() -> None:
     skill_text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
     refs = sorted((SKILL / "references").glob("*.md"))

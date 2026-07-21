@@ -55,10 +55,15 @@ integer i;
 real state[0:3];
 
 analog begin
-    for (i = 0; i < 4; i = i + 1)
-        state[i] = 0.5 * state[i] + V(in[i]);
+    @(initial_step) begin
+        for (i = 0; i < 4; i = i + 1)
+            state[i] = 0.0;
+    end
 end
 ```
+
+Keep state updates inside explicit events. Do not create self-referential assignments that run
+on every continuous analog evaluation.
 
 Use `genvar` for elaboration-style repeated analog contributions:
 
