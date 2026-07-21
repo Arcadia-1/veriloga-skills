@@ -1,0 +1,14 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module declaration_parameter_probe (
+    input electrical in
+);
+    parameter real scale = 1.0;
+    parameter integer tag = 1;
+
+    analog begin
+        @(initial_step)
+            $strobe("tag=%0d scale=%g initial_v=%g", tag, scale, V(in));
+    end
+endmodule

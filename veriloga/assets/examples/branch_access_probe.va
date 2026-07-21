@@ -1,0 +1,17 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module branch_access_probe (
+    inout electrical ap,
+    inout electrical an,
+    inout electrical bp,
+    inout electrical bn
+);
+    branch (ap, an) a_path;
+    branch (bp, bn) b_path;
+
+    analog begin
+        V(a_path) <+ 0.0;
+        I(b_path) <+ 0.0;
+    end
+endmodule

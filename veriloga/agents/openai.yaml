@@ -1,0 +1,7 @@
+interface:
+  display_name: "Verilog-A"
+  short_description: "Language syntax for .va behavioral modules"
+  default_prompt: "Use $veriloga to write a language-correct Verilog-A behavioral module."
+
+policy:
+  allow_implicit_invocation: true

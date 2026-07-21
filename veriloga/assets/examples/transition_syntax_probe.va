@@ -1,0 +1,15 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module transition_syntax_probe (
+    output electrical out
+);
+    parameter real level = 0.0;
+    parameter real delay = 0.0 from [0:inf);
+    parameter real rise = 1n from (0:inf);
+    parameter real fall = 1n from (0:inf);
+
+    analog begin
+        V(out) <+ transition(level, delay, rise, fall);
+    end
+endmodule

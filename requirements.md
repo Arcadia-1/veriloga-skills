@@ -1,85 +1,17 @@
 # Requirements
 
-This repository has one core writing skill and two optional local-verification paths.
+## Standalone Authoring
 
-## Required
+`veriloga` has no runtime requirements. It is a documentation/reference skill for writing and
+reviewing Verilog-A language constructs in `.va` source files.
 
-### `veriloga`
+## Optional Companion Skills
 
-No external dependencies.
+The repository also contains independent companion skills. Install their external programs only
+when you choose to use those companions:
 
-`veriloga` is a documentation/reference skill for writing Verilog-A behavioral models. An agent can
-use it directly by reading the files in this repository.
+- `evas-sim`: see `evas-sim/SKILL.md`
+- `openvaf`: see `openvaf/SKILL.md`
 
-## Optional Local Verification
-
-Local verification is optional. The required tools depend on the modeling style used in the `.va`
-module.
-
-### Voltage-Domain Verification: EVAS
-
-Use this path for modules built around voltage-domain behavioral constructs such as:
-
-- `V() <+`
-- `@(cross(...))`
-- `transition()`
-
-Typical examples:
-
-- SAR logic
-- DFF / digital state machines
-- counters
-- simple comparators
-- data generators
-
-Requirements:
-
-- `uv`
-- `evas-sim`
-
-Install:
-
-```bash
-uv tool install evas-sim
-```
-
-See:
-
-- `evas-sim/SKILL.md`
-
-### Current-Domain Verification: OpenVAF + ngspice
-
-Use this path for modules that rely on analog solver constructs such as:
-
-- `I() <+`
-- `ddt()`
-- `idt()`
-- `idtmod()`
-- `laplace_nd()`
-
-Typical examples:
-
-- opamps
-- RLC networks
-- VCO cores
-- filters
-- LDO-style analog blocks
-
-Requirements:
-
-- OpenVAF
-- ngspice with OSDI support
-- On Windows, Visual C++ Build Tools may also be required
-
-See:
-
-- `openvaf/references/install.md`
-- `openvaf/SKILL.md`
-
-## Notes
-
-- Most users only need `veriloga`.
-- Install verification tooling only if you want to simulate locally.
-- If a module mixes voltage-domain and current-domain constructs, split it into smaller modules
-  before choosing a verification path.
-- Project-level skill installation is the default recommended setup; see `README.md`.
+Keeping `veriloga` separate is intentional: copying only `veriloga/` gives an isolated language
+authoring skill with no companion-skill dependency.

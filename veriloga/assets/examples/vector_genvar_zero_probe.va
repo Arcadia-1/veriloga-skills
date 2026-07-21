@@ -1,0 +1,13 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module vector_genvar_zero_probe (
+    output electrical [3:0] out
+);
+    genvar k;
+
+    analog begin
+        for (k = 0; k < 4; k = k + 1)
+            V(out[k]) <+ 0.0;
+    end
+endmodule
