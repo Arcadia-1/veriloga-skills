@@ -1,0 +1,16 @@
+`include "constants.vams"
+`include "disciplines.vams"
+
+module cross_logging_probe (
+    input electrical sense
+);
+    parameter real threshold = 0.0;
+
+    analog begin
+        @(cross(V(sense) - threshold, +1))
+            $strobe("rising crossing at %g", $abstime);
+
+        @(cross(V(sense) - threshold, -1))
+            $strobe("falling crossing at %g", $abstime);
+    end
+endmodule

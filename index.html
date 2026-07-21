@@ -4,297 +4,134 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>veriloga-skills</title>
-  <meta name="description" content="Agent skills for Verilog-A behavioral modeling targeting Cadence Virtuoso / Spectre. 8 mandatory rules, 13 circuit-category references, distilled from 1,809 real .va designs.">
+  <meta name="description" content="A self-contained Verilog-A language authoring skill plus independent optional companion skills.">
   <link rel="icon" type="image/svg+xml" href="assets/banner.svg">
   <style>
     :root {
       --bg: #0d1117;
-      --card: #161b22;
+      --panel: #161b22;
       --border: #30363d;
       --text: #e6edf3;
       --muted: #8b949e;
-      --blue: #58a6ff;
-      --purple: #bc8cff;
-      --orange: #f78166;
-      --green: #3fb950;
+      --accent: #58a6ff;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
     }
-    a { color: var(--blue); text-decoration: none; }
+    a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-
-    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
-
-    .hero { text-align: center; padding: 64px 0 24px; }
+    .container { max-width: 920px; margin: 0 auto; padding: 56px 24px; }
+    .hero { text-align: center; margin-bottom: 40px; }
     .hero img { max-width: 100%; border-radius: 8px; margin-bottom: 24px; }
-    .hero p.lead { font-size: 1.15rem; color: var(--muted); max-width: 680px; margin: 0 auto 28px; }
-    .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; font-size: 1rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
-    .btn:hover { opacity: 0.85; text-decoration: none; }
-    .btn-primary { background: var(--blue); color: #fff; }
-    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-
-    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 32px 0; }
-    @media (max-width: 640px) { .features { grid-template-columns: 1fr; } }
-    .feature { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-    .feature .num { font-family: 'SF Mono', 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; color: var(--purple); display: block; margin-bottom: 8px; line-height: 1.1; }
-    .feature h3 { font-size: 1rem; margin-bottom: 8px; }
-    .feature p { font-size: 0.9rem; color: var(--muted); }
-
-    .section { padding: 48px 0; }
-    .section h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 24px; text-align: center; }
-    .section h3 { font-size: 1.1rem; margin-bottom: 12px; }
-
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: top; }
-    th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
-    td code { color: var(--blue); background: none; font-size: 0.85rem; }
-
-    pre { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; overflow-x: auto; font-size: 0.9rem; line-height: 1.7; margin-bottom: 16px; }
-    code { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace; }
-    .kw { color: var(--purple); }
-    .str { color: var(--green); }
-    .fn { color: var(--blue); }
-    .cmt { color: var(--muted); }
-    .cmd { color: var(--orange); }
-
-    .routing {
-      background: var(--card);
+    h1 { font-size: 2.2rem; margin: 0 0 12px; }
+    h2 { font-size: 1.35rem; margin: 36px 0 14px; }
+    p { color: var(--muted); }
+    code { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; }
+    pre {
+      background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 24px;
-      font-family: 'SF Mono', 'JetBrains Mono', monospace;
-      font-size: 0.88rem;
-      line-height: 1.8;
-      white-space: pre;
       overflow-x: auto;
-      color: var(--text);
+      padding: 16px;
     }
-    .routing .arrow { color: var(--purple); }
-    .routing .voltage { color: var(--blue); }
-    .routing .current { color: var(--orange); }
-    .routing .mixed { color: var(--muted); }
-
-    .cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    @media (max-width: 720px) { .cat-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 480px) { .cat-grid { grid-template-columns: 1fr; } }
-    .cat {
-      background: var(--card);
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+    th, td { border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 0.82rem; text-transform: uppercase; }
+    .panel {
+      background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px 16px;
-      transition: border-color 0.15s;
+      padding: 18px;
     }
-    .cat:hover { border-color: var(--blue); }
-    .cat a { display: block; color: var(--text); text-decoration: none; }
-    .cat a:hover { text-decoration: none; }
-    .cat .name { font-weight: 600; font-size: 0.95rem; color: var(--text); margin-bottom: 4px; }
-    .cat .desc { font-size: 0.8rem; color: var(--muted); }
-
-    .note { background: var(--card); border-left: 3px solid var(--blue); border-radius: 4px; padding: 12px 16px; margin: 16px 0; font-size: 0.9rem; color: var(--muted); }
-    .note strong { color: var(--text); }
-
-    .footer { text-align: center; padding: 48px 0 32px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 32px; }
-    .footer a { color: var(--blue); text-decoration: none; }
-    .footer a:hover { text-decoration: underline; }
-    .traffic-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; margin-top: 12px; color: var(--muted); }
-    .traffic-stats strong { color: var(--text); font-weight: 700; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    @media (max-width: 680px) {
+      .grid { grid-template-columns: 1fr; }
+      table { display: block; max-width: 100%; overflow-x: auto; }
+    }
+    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.9rem; text-align: center; color: var(--muted); }
   </style>
 </head>
 <body>
-<div class="container">
+  <main class="container">
+    <section class="hero">
+      <img src="assets/banner.svg" alt="veriloga-skills">
+      <h1>veriloga-skills</h1>
+      <p>A standalone Verilog-A language authoring skill, with optional companion skills kept independent.</p>
+    </section>
 
-  <!-- Hero -->
-  <div class="hero">
-    <img src="assets/banner.svg" alt="veriloga-skills">
-    <p class="lead">Agent skills for Verilog-A behavioral modeling targeting Cadence Virtuoso / Spectre. Rules and patterns distilled from 1,809 real <code>.va</code> designs &mdash; generated code is ready to drop into a Virtuoso cellview.</p>
-    <div class="hero-buttons">
-      <a href="https://github.com/Arcadia-1/veriloga-skills" class="btn btn-primary">GitHub</a>
-      <a href="#install" class="btn btn-secondary">Install</a>
+    <section>
+      <h2>Core Skill</h2>
+      <div class="panel">
+        <p><strong><a href="veriloga/SKILL.md">veriloga</a></strong> is self-contained. It covers
+        Verilog-A source-language syntax and semantics for <code>.va</code> files: module interfaces,
+        disciplines, analog blocks, branch access, contributions, events, parameters, arrays,
+        operators, and small language examples.</p>
+        <p>Copying only <code>veriloga/</code> is enough to install the authoring skill. It does not
+        require local simulation tools, Python packages, project datasets, or the sibling skills.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Skill Contents</h2>
+      <div class="grid">
+        <div class="panel">
+          <h3>References</h3>
+          <ul>
+            <li><a href="veriloga/references/modules-ports-disciplines.md">modules, ports, disciplines</a></li>
+            <li><a href="veriloga/references/analog-contributions.md">analog blocks and contributions</a></li>
+            <li><a href="veriloga/references/events-state-control.md">events, state, and control flow</a></li>
+            <li><a href="veriloga/references/operators-system-tasks.md">operators and system tasks</a></li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Assets</h3>
+          <ul>
+            <li><a href="veriloga/assets/template.va">neutral module template</a></li>
+            <li><a href="veriloga/assets/examples/minimal_zero_probe.va">minimal contribution syntax</a></li>
+            <li><a href="veriloga/assets/examples/declaration_parameter_probe.va">declaration and parameter syntax</a></li>
+            <li><a href="veriloga/assets/examples/cross_logging_probe.va">cross-event syntax</a></li>
+            <li><a href="veriloga/assets/examples/transition_syntax_probe.va">transition syntax</a></li>
+            <li><a href="veriloga/assets/examples/vector_genvar_zero_probe.va">vector and genvar syntax</a></li>
+            <li><a href="veriloga/assets/examples/branch_access_probe.va">named branch access syntax</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Optional Sibling Skills</h2>
+      <table>
+        <tr><th>Folder</th><th>Status</th><th>Scope</th></tr>
+        <tr>
+          <td><a href="evas-sim/SKILL.md"><code>evas-sim</code></a></td>
+          <td>Independent optional skill</td>
+          <td>Local verification workflow, installed only when that workflow is desired.</td>
+        </tr>
+        <tr>
+          <td><a href="openvaf/SKILL.md"><code>openvaf</code></a></td>
+          <td>Independent optional skill</td>
+          <td>Local compile/simulation workflow, installed only when that workflow is desired.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section id="install">
+      <h2>Install The Authoring Skill</h2>
+      <p>The clone command below is only a copy/install method. It is not a runtime dependency of
+      the <code>veriloga</code> skill after the folder has been copied.</p>
+      <pre><code>git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills /tmp/veriloga-skills
+mkdir -p .agents/skills
+cp -r /tmp/veriloga-skills/veriloga .agents/skills/</code></pre>
+    </section>
+
+    <div class="footer">
+      <a href="https://github.com/Arcadia-1/veriloga-skills">GitHub</a> &middot; MIT License
     </div>
-  </div>
-
-  <!-- Features -->
-  <div class="features">
-    <div class="feature">
-      <span class="num">1,809</span>
-      <h3>Real designs distilled</h3>
-      <p>Rules and patterns extracted from a curated corpus of real Verilog-A behavioral models, not synthetic toy examples.</p>
-    </div>
-    <div class="feature">
-      <span class="num">8</span>
-      <h3>Mandatory rules</h3>
-      <p>Port declaration style, supply handling, contribution forms, time-step control, EVAS &amp; Spectre portability &mdash; enforced before the agent writes a line.</p>
-    </div>
-    <div class="feature">
-      <span class="num">13</span>
-      <h3>Circuit categories</h3>
-      <p>From SAR ADC logic to PLL clocking to switched-cap integrators &mdash; each with reference patterns the agent can compose.</p>
-    </div>
-  </div>
-
-  <!-- Skills -->
-  <div class="section">
-    <h2>Three Skills</h2>
-    <table>
-      <tr><th>Skill</th><th>Role</th><th>Function</th></tr>
-      <tr>
-        <td><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/SKILL.md"><strong>veriloga</strong></a></td>
-        <td>Core &mdash; code writing</td>
-        <td>8 mandatory rules + 13 circuit-category references + curated core DUT examples; produces Verilog-A ready to drop into a Virtuoso cellview.</td>
-      </tr>
-      <tr>
-        <td><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/evas-sim/SKILL.md"><strong>evas-sim</strong></a></td>
-        <td>Optional &mdash; voltage-domain verification</td>
-        <td>Drives the <a href="https://evas.tokenzhang.com/">EVAS</a> event-driven simulator to verify voltage-domain modules (SAR logic, DFF, counter, &hellip;).</td>
-      </tr>
-      <tr>
-        <td><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/openvaf/SKILL.md"><strong>openvaf</strong></a></td>
-        <td>Optional &mdash; current-domain verification</td>
-        <td>OpenVAF compile &rarr; ngspice / OSDI load &rarr; simulation verification.</td>
-      </tr>
-    </table>
-    <p style="color:var(--muted);font-size:0.9rem;text-align:center;margin-top:8px"><code>veriloga</code> handles all code writing on its own. <code>evas-sim</code> and <code>openvaf</code> are optional companion skills for local verification.</p>
-  </div>
-
-  <!-- Verification routing -->
-  <div class="section">
-    <h2>Verification Routing</h2>
-    <div class="routing">Finish module <span class="arrow">&rarr;</span> scan <span class="kw">analog begin</span> <span class="arrow">&rarr;</span> classify domain
-                                    <span class="arrow">&rdsh;</span> <span class="voltage">voltage-domain</span> <span class="arrow">&rarr;</span> EVAS verification
-                                    <span class="arrow">&rdsh;</span> <span class="current">current-domain</span> <span class="arrow">&rarr;</span> OpenVAF compile + ngspice simulation
-                                    <span class="arrow">&rdsh;</span> <span class="mixed">mixed-domain</span>   <span class="arrow">&rarr;</span> split into two sub-modules</div>
-    <table>
-      <tr><th>Domain</th><th>Deciding criterion</th><th>Tool</th></tr>
-      <tr>
-        <td><strong style="color:var(--blue)">Voltage</strong></td>
-        <td><code>V() &lt;+</code> + <code>@(cross())</code> / <code>transition()</code>, no <code>I() &lt;+</code></td>
-        <td><a href="https://evas.tokenzhang.com/">EVAS</a> event-driven simulator</td>
-      </tr>
-      <tr>
-        <td><strong style="color:var(--orange)">Current</strong></td>
-        <td><code>I() &lt;+</code> / <code>ddt()</code> / <code>idt()</code> / <code>laplace_nd()</code></td>
-        <td><code>openvaf</code> skill + ngspice OSDI</td>
-      </tr>
-    </table>
-    <p style="color:var(--muted);font-size:0.9rem;text-align:center">Full domain classification: <a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/domain-routing.md"><code>veriloga/references/domain-routing.md</code></a></p>
-  </div>
-
-  <!-- Install -->
-  <div class="section" id="install">
-    <h2>Installation</h2>
-
-    <h3>Project-level (default, recommended)</h3>
-    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px">Run from the project root. Installs into <code>.agent/skills/</code> &mdash; only this project sees the skills.</p>
-    <pre><code><span class="cmd">git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills /tmp/veriloga-skills</span> <span class="kw">\</span>
-  <span class="kw">&amp;&amp;</span> <span class="cmd">mkdir -p .agent/skills</span> <span class="kw">\</span>
-  <span class="kw">&amp;&amp;</span> <span class="cmd">cp -r</span> /tmp/veriloga-skills/{veriloga,evas-sim,openvaf} .agent/skills/ <span class="kw">\</span>
-  <span class="kw">&amp;&amp;</span> <span class="cmd">rm -rf</span> /tmp/veriloga-skills</code></pre>
-
-    <h3>Global (optional)</h3>
-    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px">Installs into <code>~/.agent/skills/</code> &mdash; all projects see the skills.</p>
-    <pre><code><span class="cmd">git clone --depth 1 https://github.com/Arcadia-1/veriloga-skills /tmp/veriloga-skills</span> <span class="kw">\</span>
-  <span class="kw">&amp;&amp;</span> <span class="cmd">mkdir -p</span> ~/.agent/skills <span class="kw">\</span>
-  <span class="kw">&amp;&amp;</span> <span class="cmd">cp -r</span> /tmp/veriloga-skills/{veriloga,evas-sim,openvaf} ~/.agent/skills/ <span class="kw">\</span>
-  <span class="kw">&amp;&amp;</span> <span class="cmd">rm -rf</span> /tmp/veriloga-skills</code></pre>
-
-    <h3>Verify</h3>
-    <p>Run <code>/skills</code> in the Agent; confirm <code>veriloga</code>, <code>evas-sim</code>, and <code>openvaf</code> appear in the output list.</p>
-
-    <div class="note"><strong>Project customization:</strong> edit <code>veriloga/references/customize.md</code> to override port naming conventions, supply voltages, file-header templates, simulator-specific options, etc.</div>
-  </div>
-
-  <!-- Categories -->
-  <div class="section">
-    <h2>Circuit Categories</h2>
-    <p style="color:var(--muted);font-size:0.9rem;text-align:center;margin-bottom:24px">Each card opens the full reference markdown on GitHub.</p>
-    <div class="cat-grid">
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/adc-sar.md">
-        <div class="name">ADC / SAR</div>
-        <div class="desc">SAR logic, pipeline MDAC, system-level decomposition</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/amplifier-filter.md">
-        <div class="name">Amplifier / Filter</div>
-        <div class="desc">Op-amps, gm-stages, biquads, Miller-comp</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/calibration.md">
-        <div class="name">Calibration</div>
-        <div class="desc">DEM, dither, trim loops, LMS-style routines</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/comparator.md">
-        <div class="name">Comparator</div>
-        <div class="desc">StrongARM, regen-latch, kickback / offset modeling</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/dac.md">
-        <div class="name">DAC</div>
-        <div class="desc">Binary-weighted, segmented, CDAC, current-steering</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/digital-logic.md">
-        <div class="name">Digital Logic</div>
-        <div class="desc">DFF, counter, FSM, therm2bin, PRBS</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/measurement-helpers.md">
-        <div class="name">Measurement Helpers</div>
-        <div class="desc">Window meters, edge counters, $strobe loggers</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/passive-model.md">
-        <div class="name">Passive Model</div>
-        <div class="desc">R / L / C with parasitics, transmission-line-lite</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/pll-clock.md">
-        <div class="name">PLL / Clock</div>
-        <div class="desc">VCO, divider, charge-pump, repair-order playbook</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/power-switch.md">
-        <div class="name">Power / Switch</div>
-        <div class="desc">LDO behavior, bootstrap NOL driver, SC integrator</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/sample-hold.md">
-        <div class="name">Sample &amp; Hold</div>
-        <div class="desc">Single-edge sampler, T/H array, sampler kickback</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/signal-source.md">
-        <div class="name">Signal Source</div>
-        <div class="desc">Sine, ramp, PWL, clock-burst, noise sources</div>
-      </a></div>
-      <div class="cat"><a href="https://github.com/Arcadia-1/veriloga-skills/blob/main/veriloga/references/categories/testbench-spectre.md">
-        <div class="name">Testbench (Spectre)</div>
-        <div class="desc">.scs harness patterns, stimulus &amp; probe conventions</div>
-      </a></div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="footer">
-    <p>
-      <a href="https://github.com/Arcadia-1/veriloga-skills">GitHub</a> &middot;
-      MIT License &middot;
-      Tsinghua University
-    </p>
-    <div class="traffic-stats" aria-label="Traffic statistics">
-      <span>Total site views <strong id="busuanzi_site_pv">&hellip;</strong></span>
-      <span>Unique visitors <strong id="busuanzi_site_uv">&hellip;</strong></span>
-      <span>Current page views <strong id="busuanzi_page_pv">&hellip;</strong></span>
-    </div>
-  </div>
-
-</div>
-<script>
-  (function () {
-    var host = window.location.hostname;
-    if (!host || host === "localhost" || host === "127.0.0.1" || host === "::1") {
-      return;
-    }
-    var script = document.createElement("script");
-    script.src = "https://api.busuanzi.cc/static/3.6.9/busuanzi.min.js";
-    script.defer = true;
-    document.body.appendChild(script);
-  }());
-</script>
+  </main>
 </body>
 </html>
